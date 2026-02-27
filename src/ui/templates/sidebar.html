@@ -1,0 +1,190 @@
+<!-- 左侧操作栏模板 -->
+<div id="sidebar" class="sidebar">
+  <!-- 侧边栏收起时的展开按钮 -->
+  <button id="sidebar-expand-btn" class="sidebar-expand-btn" aria-label="Expand sidebar">
+    <span class="expand-icon">≡</span>
+  </button>
+  <!-- 应用标题 -->
+  <div class="sidebar-header">
+    <h1 class="app-title">gff Viewer</h1>
+    <div class="header-actions">
+      <button id="fullscreen-btn" class="header-action-btn fullscreen" aria-label="Fullscreen">
+        <span class="btn-icon">⛶</span>
+      </button>
+      <button id="export-svg-btn" class="header-action-btn export" aria-label="Export SVG">
+        <span class="btn-icon">📤</span>
+      </button>
+      <button id="sidebar-collapse-btn" class="sidebar-collapse-btn" aria-label="Collapse sidebar">
+        <span class="collapse-icon">-</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 导入数据 -->
+  <div class="sidebar-section import-section">
+    <h4 class="section-title">Gff Data</h4>
+    <div class="import-buttons">
+      <div id="drop-area" class="drop-area">
+        <input type="file" id="gff-file-input" accept=".gff,.gff3" class="file-input" />
+        <div class="drop-content">
+          <div class="drop-icon">📂</div>
+          <div class="drop-text">Drop GFF file here or click to select</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gene搜索 -->
+  <div class="sidebar-section search-section">
+    <h4 class="section-title">根据基因名或ID搜索</h4>
+    <div class="search-container">
+      <input type="text" id="gene-search-input" class="search-input" placeholder="回车搜索" />
+    </div>
+    <div id="search-results" class="search-results"></div>
+  </div>
+
+  <!-- Tracks -->
+  <div class="sidebar-section tracks-section">
+    <h4 class="section-title">Tracks Control</h4>
+    <div id="track-list" class="track-list"></div>
+  </div>
+
+  <!-- 控制选项 -->
+  <div class="sidebar-section controls-section">
+    <h4 class="section-title">其它选项</h4>
+    <div class="color-scheme-dropdown">
+      <div id="color-scheme-selected" class="color-scheme-selected">
+        <div class="scheme-preview" id="selected-scheme-preview">
+          <div class="scheme-color-block" style="background-color: #1f77b4;"></div>
+          <div class="scheme-color-block" style="background-color: #ff7f0e;"></div>
+          <div class="scheme-color-block" style="background-color: #2ca02c;"></div>
+          <div class="scheme-color-block" style="background-color: #d62728;"></div>
+        </div>
+        <span class="scheme-name" id="selected-scheme-name">Default</span>
+        <span class="dropdown-arrow">▼</span>
+      </div>
+      <div id="color-scheme-options" class="color-scheme-options">
+        <div class="scheme-option" data-value="default">
+          <div class="scheme-preview">
+            <div class="scheme-color-block" style="background-color: #1f77b4;"></div>
+            <div class="scheme-color-block" style="background-color: #ff7f0e;"></div>
+            <div class="scheme-color-block" style="background-color: #2ca02c;"></div>
+            <div class="scheme-color-block" style="background-color: #d62728;"></div>
+          </div>
+          <span>Default</span>
+        </div>
+        <div class="scheme-option" data-value="viridis">
+          <div class="scheme-preview">
+            <div class="scheme-color-block" style="background-color: #440154;"></div>
+            <div class="scheme-color-block" style="background-color: #482878;"></div>
+            <div class="scheme-color-block" style="background-color: #3e4989;"></div>
+            <div class="scheme-color-block" style="background-color: #31688e;"></div>
+          </div>
+          <span>Viridis</span>
+        </div>
+        <div class="scheme-option" data-value="plasma">
+          <div class="scheme-preview">
+            <div class="scheme-color-block" style="background-color: #0d0887;"></div>
+            <div class="scheme-color-block" style="background-color: #46039f;"></div>
+            <div class="scheme-color-block" style="background-color: #7201a8;"></div>
+            <div class="scheme-color-block" style="background-color: #9c179e;"></div>
+          </div>
+          <span>Plasma</span>
+        </div>
+        <div class="scheme-option" data-value="inferno">
+          <div class="scheme-preview">
+            <div class="scheme-color-block" style="background-color: #000004;"></div>
+            <div class="scheme-color-block" style="background-color: #160b39;"></div>
+            <div class="scheme-color-block" style="background-color: #420a68;"></div>
+            <div class="scheme-color-block" style="background-color: #6a176e;"></div>
+          </div>
+          <span>Inferno</span>
+        </div>
+        <div class="scheme-option" data-value="magma">
+          <div class="scheme-preview">
+            <div class="scheme-color-block" style="background-color: #000004;"></div>
+            <div class="scheme-color-block" style="background-color: #140c3a;"></div>
+            <div class="scheme-color-block" style="background-color: #3b0f70;"></div>
+            <div class="scheme-color-block" style="background-color: #641a80;"></div>
+          </div>
+          <span>Magma</span>
+        </div>
+        <div class="scheme-option" data-value="cividis">
+          <div class="scheme-preview">
+            <div class="scheme-color-block" style="background-color: #00203f;"></div>
+            <div class="scheme-color-block" style="background-color: #005662;"></div>
+            <div class="scheme-color-block" style="background-color: #008775;"></div>
+            <div class="scheme-color-block" style="background-color: #00b894;"></div>
+          </div>
+          <span>Cividis</span>
+        </div>
+        <div class="scheme-option" data-value="category10">
+          <div class="scheme-preview">
+            <div class="scheme-color-block" style="background-color: #1f77b4;"></div>
+            <div class="scheme-color-block" style="background-color: #ff7f0e;"></div>
+            <div class="scheme-color-block" style="background-color: #2ca02c;"></div>
+            <div class="scheme-color-block" style="background-color: #d62728;"></div>
+          </div>
+          <span>Category 10</span>
+        </div>
+        <div class="scheme-option" data-value="set1">
+          <div class="scheme-preview">
+            <div class="scheme-color-block" style="background-color: #e41a1c;"></div>
+            <div class="scheme-color-block" style="background-color: #377eb8;"></div>
+            <div class="scheme-color-block" style="background-color: #4daf4a;"></div>
+            <div class="scheme-color-block" style="background-color: #984ea3;"></div>
+          </div>
+          <span>Set 1</span>
+        </div>
+        <div class="scheme-option" data-value="set2">
+          <div class="scheme-preview">
+            <div class="scheme-color-block" style="background-color: #66c2a5;"></div>
+            <div class="scheme-color-block" style="background-color: #fc8d62;"></div>
+            <div class="scheme-color-block" style="background-color: #8da0cb;"></div>
+            <div class="scheme-color-block" style="background-color: #e78ac3;"></div>
+          </div>
+          <span>Set 2</span>
+        </div>
+        <div class="scheme-option" data-value="set3">
+          <div class="scheme-preview">
+            <div class="scheme-color-block" style="background-color: #8dd3c7;"></div>
+            <div class="scheme-color-block" style="background-color: #ffffb3;"></div>
+            <div class="scheme-color-block" style="background-color: #bebada;"></div>
+            <div class="scheme-color-block" style="background-color: #fb8072;"></div>
+          </div>
+          <span>Set 3</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 图例和标签控制 -->
+    <div class="control-item control-buttons-row">
+      <button id="legend-toggle" class="control-toggle">
+        <span class="toggle-text">Show Legend</span>
+      </button>
+      <button id="labels-toggle" class="control-toggle">
+        <span class="toggle-text">Show Labels</span>
+      </button>
+    </div>
+
+    <!-- 参考圆线控制 -->
+    <div class="control-item">
+      <button id="grid-toggle" class="control-toggle">
+        <span class="toggle-text">Show Grid</span>
+      </button>
+    </div>
+    <!-- 缩放控制 -->
+    <div class="control-item zoom-controls  control-buttons-row">
+      <button id="zoom-in-btn" class="zoom-btn" aria-label="Zoom in">放大</button>
+      <button id="zoom-out-btn" class="zoom-btn" aria-label="Zoom out">缩小</button>
+      <button id="reset-zoom-btn" class="zoom-btn" aria-label="Reset zoom">重置</button>
+    </div>
+        <!-- 渲染模式 -->
+    <div class="control-item">
+      <div class="render-mode-options">
+        <button class="render-mode-btn active" data-mode="svg">Svg Mode</button>
+        <button class="render-mode-btn" data-mode="canvas">Canvas Mode</button>
+      </div>
+    </div>
+  </div>
+</div>
