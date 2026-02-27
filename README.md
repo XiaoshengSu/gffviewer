@@ -63,8 +63,8 @@ gff Viewer 是一个企业级、高性能的生物基因组可视化引擎，旨
 1. **克隆项目**
 
 ```bash
-git clone <repository-url>
-cd iview
+git clone https://github.com/XiaoshengSu/gffviewer.git
+cd gffviewer
 ```
 
 2. **安装依赖**
