@@ -197,16 +197,16 @@ export abstract class BaseRenderer {
     if (!targetElement) return;
     
     // 鼠标事件
-    targetElement.addEventListener('mousedown', (event) => this.handleMouseDown());
-    targetElement.addEventListener('mousemove', (event) => this.handleMouseMove(event));
-    targetElement.addEventListener('mouseup', (event) => this.handleMouseUp());
-    targetElement.addEventListener('mouseleave', (event) => this.handleMouseLeave(event));
+    targetElement.addEventListener('mousedown', () => this.handleMouseDown());
+    targetElement.addEventListener('mousemove', (event) => this.handleMouseMove(event as MouseEvent));
+    targetElement.addEventListener('mouseup', () => this.handleMouseUp());
+    targetElement.addEventListener('mouseleave', (event) => this.handleMouseLeave(event as MouseEvent));
     targetElement.addEventListener('wheel', this.handleWheel.bind(this));
     
     // 触摸事件
-    targetElement.addEventListener('touchstart', (event) => this.handleTouchStart());
-    targetElement.addEventListener('touchmove', (event) => this.handleTouchMove());
-    targetElement.addEventListener('touchend', (event) => this.handleTouchEnd());
+    targetElement.addEventListener('touchstart', () => this.handleTouchStart());
+    targetElement.addEventListener('touchmove', () => this.handleTouchMove());
+    targetElement.addEventListener('touchend', () => this.handleTouchEnd());
   }
   
   /**
@@ -219,7 +219,7 @@ export abstract class BaseRenderer {
   /**
    * 处理鼠标移动事件
    */
-  protected handleMouseMove(event: MouseEvent): void {
+  protected handleMouseMove(_event: MouseEvent): void {
     // 子类实现
   }
   
@@ -233,7 +233,7 @@ export abstract class BaseRenderer {
   /**
    * 处理鼠标离开画布事件
    */
-  protected handleMouseLeave(event: MouseEvent): void {
+  protected handleMouseLeave(_event: MouseEvent): void {
     // 子类实现
   }
   

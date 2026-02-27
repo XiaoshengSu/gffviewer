@@ -159,8 +159,6 @@ export class CircularRenderer extends BaseRenderer {
         // 非拖拽状态下，处理鼠标悬停
         const rect = this.canvas?.getBoundingClientRect();
         if (rect) {
-          const x = event.data.global.x - rect.left;
-          const y = event.data.global.y - rect.top;
           this.handleMouseMove({ clientX: event.data.global.x, clientY: event.data.global.y } as MouseEvent);
         }
       }
@@ -619,7 +617,7 @@ export class CircularRenderer extends BaseRenderer {
   /**
    * 处理鼠标离开画布事件
    */
-  protected handleMouseLeave(event: MouseEvent): void {
+  protected handleMouseLeave(_event: MouseEvent): void {
     // 鼠标离开画布，触发空hover事件
     this.emit('hover', null);
   }
