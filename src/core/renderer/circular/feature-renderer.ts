@@ -382,39 +382,51 @@ export class FeatureRenderer {
   // ─────────────────────────────────────────────────────────────────────────
   renderCanvasTrackBackground(radius: number, trackHeight: number, _color: string | number, trackType?: string, featureContainer?: PIXI.Container): void {
     const g = new PIXI.Graphics();
+    const innerRadius = radius - trackHeight;
+    
     // 背景底色
-    g.arc(this.centerX, this.centerY, radius, 0, Math.PI * 2, false);
-    g.arc(this.centerX, this.centerY, radius - trackHeight, Math.PI * 2, 0, true);
+    if (innerRadius > 10) {
+      // 当innerRadius足够大时，绘制完整的环形
+      g.arc(this.centerX, this.centerY, radius, 0, Math.PI * 2, false);
+      g.arc(this.centerX, this.centerY, innerRadius, Math.PI * 2, 0, true);
+    } else {
+      // 当innerRadius太小时，绘制一个实心圆
+      g.arc(this.centerX, this.centerY, radius, 0, Math.PI * 2, false);
+    }
     g.fill({ color: 0xf5f5f5, alpha: 0.5 });
+    
     // 外边缘白色描边（区分轨道）
     g.arc(this.centerX, this.centerY, radius, 0, Math.PI * 2);
     g.setStrokeStyle({ width: 1.5, color: 0xffffff, alpha: 1.0 });
     g.stroke();
-    // GC Skew 零值参考线（只在轨道高度足够大时绘制，避免在中心形成不必要的圆圈）
-    if ((trackType === 'gc_skew_plus' || trackType === 'gc_skew_minus') && trackHeight > 10) {
-      g.arc(this.centerX, this.centerY, radius - trackHeight / 2, 0, Math.PI * 2);
-      g.setStrokeStyle({ width: 1, color: 0x999999, alpha: 0.7 });
-      g.stroke();
-    }
+    
+    // 移除GC Skew零值参考线，用户认为它是多余的
     featureContainer?.addChild(g);
   }
 
   renderSvgTrackBackground(radius: number, trackHeight: number, _color: string | number, trackType?: string, svgContainer?: d3.Selection<SVGElement, unknown, null, undefined>): void {
     if (!svgContainer) return;
     const g = svgContainer.select('g#featureContainer');
-    g.append('path')
-      .attr('d', createAnnulusPath(this.centerX, this.centerY, radius, radius - trackHeight))
-      .attr('fill', '#f5f5f5').attr('fill-opacity', 0.5);
+    const innerRadius = radius - trackHeight;
+    
+    if (innerRadius > 10) {
+      // 当innerRadius足够大时，绘制完整的环形
+      g.append('path')
+        .attr('d', createAnnulusPath(this.centerX, this.centerY, radius, innerRadius))
+        .attr('fill', '#f5f5f5').attr('fill-opacity', 0.5);
+    } else {
+      // 当innerRadius太小时，绘制一个实心圆
+      g.append('circle')
+        .attr('cx', this.centerX).attr('cy', this.centerY).attr('r', radius)
+        .attr('fill', '#f5f5f5').attr('fill-opacity', 0.5);
+    }
+    
     // 外边缘白色描边
     g.append('circle')
       .attr('cx', this.centerX).attr('cy', this.centerY).attr('r', radius)
       .attr('fill', 'none').attr('stroke', '#ffffff').attr('stroke-width', 1.5);
-    // GC Skew 零值参考线（只在轨道高度足够大时绘制，避免在中心形成不必要的圆圈）
-    if ((trackType === 'gc_skew_plus' || trackType === 'gc_skew_minus') && trackHeight > 10) {
-      g.append('circle')
-        .attr('cx', this.centerX).attr('cy', this.centerY).attr('r', radius - trackHeight / 2)
-        .attr('fill', 'none').attr('stroke', '#999999').attr('stroke-width', 1).attr('stroke-opacity', 0.7);
-    }
+    
+    // 移除GC Skew零值参考线，用户认为它是多余的
   }
 
   // ─────────────────────────────────────────────────────────────────────────
