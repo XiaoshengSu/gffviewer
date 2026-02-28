@@ -145,9 +145,17 @@ export class LegendRenderer {
       colorBlock.setStrokeStyle({ width: 1, color: 0x333333 });
       legendContainer.addChild(colorBlock);
       
+      // 构建轨道文本，非GC轨道添加数量和长度统计
+      let trackTextContent = track.name;
+      if (track.type !== 'gc_content' && track.type !== 'gc_skew_plus' && track.type !== 'gc_skew_minus') {
+        // 计算轨道总长度（所有特征的长度之和）
+        const totalLength = track.features.reduce((sum, feature) => sum + (feature.end - feature.start), 0);
+        trackTextContent += ` (${track.features.length}, ${totalLength}bp)`;
+      }
+      
       // 绘制轨道名称
       const trackText = new PIXI.Text({
-        text: track.name,
+        text: trackTextContent,
         style: {
           fontSize: 12,
           fill: 0x333333,
@@ -294,9 +302,17 @@ export class LegendRenderer {
         .attr('stroke', '#333333')
         .attr('stroke-width', 1);
       
+      // 构建轨道文本，非GC轨道添加数量和长度统计
+      let trackTextContent = track.name;
+      if (track.type !== 'gc_content' && track.type !== 'gc_skew_plus' && track.type !== 'gc_skew_minus') {
+        // 计算轨道总长度（所有特征的长度之和）
+        const totalLength = track.features.reduce((sum, feature) => sum + (feature.end - feature.start), 0);
+        trackTextContent += ` (${track.features.length}, ${totalLength}bp)`;
+      }
+      
       // 绘制轨道名称
       legendGroup.append('text')
-        .text(track.name)
+        .text(trackTextContent)
         .attr('x', legendX + 30)
         .attr('y', itemY + 12)
         .attr('font-size', '12px')

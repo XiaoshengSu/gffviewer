@@ -736,12 +736,20 @@ export class CGView {
     visibleTracks.forEach((track: any) => {
       const itemY = legendY + 30 + currentItemIndex * itemHeight;
       
+      // 构建轨道文本，非GC轨道添加数量和长度统计
+      let trackTextContent = track.name;
+      if (track.type !== 'gc_content' && track.type !== 'gc_skew_plus' && track.type !== 'gc_skew_minus') {
+        // 计算轨道总长度（所有特征的长度之和）
+        const totalLength = track.features.reduce((sum, feature) => sum + (feature.end - feature.start), 0);
+        trackTextContent += ` (${track.features.length}, ${totalLength}bp)`;
+      }
+      
       // 绘制颜色块
       svg += `<rect x="${legendX}" y="${itemY}" width="20" height="15" fill="${track.color}" stroke="#333333" stroke-width="1"/>
 `;
       
       // 绘制轨道名称
-      svg += `<text x="${legendX + 30}" y="${itemY + 12}" font-size="12" fill="#333333">${track.name}</text>
+      svg += `<text x="${legendX + 30}" y="${itemY + 12}" font-size="12" fill="#333333">${trackTextContent}</text>
 `;
       
       currentItemIndex++;
