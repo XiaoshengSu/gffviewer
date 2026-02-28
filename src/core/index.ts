@@ -740,7 +740,7 @@ export class CGView {
       let trackTextContent = track.name;
       if (track.type !== 'gc_content' && track.type !== 'gc_skew_plus' && track.type !== 'gc_skew_minus') {
         // 计算轨道总长度（所有特征的长度之和）
-        const totalLength = track.features.reduce((sum, feature) => sum + (feature.end - feature.start), 0);
+        const totalLength = track.features.reduce((sum: number, feature: any) => sum + (feature.end - feature.start), 0);
         trackTextContent += ` (${track.features.length}, ${totalLength}bp)`;
       }
       
