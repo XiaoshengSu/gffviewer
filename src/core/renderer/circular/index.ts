@@ -363,13 +363,6 @@ export class CircularRenderer extends BaseRenderer {
     this.featureContainer?.removeChildren();
     this.labelContainer?.removeChildren();
     
-    // 绘制一个简单的圆形，确认渲染系统正常工作
-    const graphics = new PIXI.Graphics();
-    graphics.circle(this.centerX, this.centerY, this.radius);
-    graphics.fill({ color: 0xffffff });
-    graphics.setStrokeStyle({ width: 2, color: 0x333333 });
-    this.featureContainer?.addChild(graphics);
-    
     // 渲染特征
     if (this.genome) {
       console.log('CircularRenderer: rendering features for genome with', this.genome.tracks.length, 'tracks');
@@ -377,6 +370,13 @@ export class CircularRenderer extends BaseRenderer {
       this.labelRenderer.renderCanvasLabels(this.genome, this.labelContainer);
     } else {
       console.warn('CircularRenderer: genome is null, skipping feature rendering');
+      // 绘制一个简单的圆形，确认渲染系统正常工作
+      const graphics = new PIXI.Graphics();
+      graphics.circle(this.centerX, this.centerY, this.radius);
+      graphics.fill({ color: 0xffffff });
+      graphics.setStrokeStyle({ width: 2, color: 0x333333 });
+      this.featureContainer?.addChild(graphics);
+      
       // 绘制一个提示文本
       const text = new PIXI.Text({
         text: 'No genome data loaded yet',

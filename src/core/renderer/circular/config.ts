@@ -10,13 +10,10 @@ export const RENDER_CONFIG = {
   MAX_TRACK_HEIGHT: 30,
   TRACK_SPACING: 5,
 
-  // 注解特征配置
-  // MIN_ANGLE_WIDTH 已废弃 —— 现在用像素锚定缝隙，不需要全局最小角度
-  MIN_ANGLE_WIDTH: 0.001,       // 保留字段兼容性，实际不再使用
 
-  // GC 轨道缝隙配置（保持原有逻辑）
-  MIN_GAP_ANGLE: 0.005,
-  MAX_GAP_ANGLE: 0.015,
+  // GC 轨道缝隙配置
+  MIN_GAP_ANGLE: 0.01,
+  MAX_GAP_ANGLE: 0.05,
   GAP_ANGLE_RATIO: 0.2,
 
   // 注解轨道缝隙像素配置（新增，供 computeAnnotationAngles 使用）
