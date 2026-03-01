@@ -79,7 +79,8 @@ export class ZoomPanController {
       return;
     }
     
-    const scaleFactor = level / this.zoomLevel;
+    // 保存当前的 zoomLevel 用于计算
+    const prevScale = this.zoomLevel;
     
     if (point) {
       // 以指定点为中心进行缩放，只缩放圈图相关的容器，不缩放图例容器及其子元素
@@ -90,14 +91,26 @@ export class ZoomPanController {
         const currentX = match ? parseFloat(match[1]) : 0;
         const currentY = match ? parseFloat(match[2]) : 0;
         
-        // 计算新的位置，使鼠标点保持在同一屏幕位置
-        const newX = point.x - (point.x - currentX) * scaleFactor;
-        const newY = point.y - (point.y - currentY) * scaleFactor;
+        // 使用与 Canvas 相同的逻辑：先计算世界坐标，再反算新位移
+        // 1. 计算鼠标点在"世界坐标系"（未缩放、未平移）中的位置
+        // containerX = point.x - currentX
+        // worldX = containerX / prevScale
+        const worldX = (point.x - currentX) / prevScale;
+        const worldY = (point.y - currentY) / prevScale;
+        
+        // 2. 计算新的平移量，使得该世界坐标点在新的缩放 level 下依然位于鼠标点 point.x
+        // point.x = worldX * level + newX
+        // newX = point.x - worldX * level
+        const newX = point.x - worldX * level;
+        const newY = point.y - worldY * level;
         
         g.attr('transform', `translate(${newX},${newY}) scale(${level})`);
       });
     } else {
-      // 以画布中心为中心进行缩放，只缩放圈图相关的容器，不缩放图例容器及其子元素
+      // 以画布中心为中心进行缩放
+      const centerX = this.width / 2;
+      const centerY = this.height / 2;
+      
       svgContainer.selectAll('g#gridContainer, g#featureContainer, g#labelContainer, g#scaleContainer').each(function() {
         const g = d3.select(this);
         const transform = g.attr('transform') || 'translate(0,0)';
@@ -105,13 +118,19 @@ export class ZoomPanController {
         const currentX = match ? parseFloat(match[1]) : 0;
         const currentY = match ? parseFloat(match[2]) : 0;
         
-        // 保持当前位置，只应用缩放
-        g.attr('transform', `translate(${currentX},${currentY}) scale(${level})`);
+        // 1. 计算画布中心在"世界坐标系"中的位置
+        const worldCenterX = (centerX - currentX) / prevScale;
+        const worldCenterY = (centerY - currentY) / prevScale;
+        
+        // 2. 反算新位移
+        const newX = centerX - worldCenterX * level;
+        const newY = centerY - worldCenterY * level;
+        
+        g.attr('transform', `translate(${newX},${newY}) scale(${level})`);
       });
     }
     
     this.zoomLevel = level;
-    // 不需要调用render()，直接修改缩放和位置即可
   }
   
   /**
@@ -131,13 +150,32 @@ export class ZoomPanController {
       svgContainer.selectAll('g#gridContainer, g#featureContainer, g#labelContainer, g#scaleContainer').each(function() {
         const g = d3.select(this);
         const transform = g.attr('transform') || 'translate(0,0)';
-        const match = transform.match(/translate\(([^,]+),([^\)]+)\)/);
-        if (match) {
-          const x = parseFloat(match[1]) + offset.x;
-          const y = parseFloat(match[2]) + offset.y;
-          g.attr('transform', `translate(${x},${y})`);
+        
+        // 解析当前的 translate 和 scale
+        let currentX = 0;
+        let currentY = 0;
+        let currentScale = 1;
+        
+        const translateMatch = transform.match(/translate\(([^,]+),([^\)]+)\)/);
+        if (translateMatch) {
+          currentX = parseFloat(translateMatch[1]);
+          currentY = parseFloat(translateMatch[2]);
+        }
+        
+        const scaleMatch = transform.match(/scale\(([^\)]+)\)/);
+        if (scaleMatch) {
+          currentScale = parseFloat(scaleMatch[1]);
+        }
+        
+        // 计算新的位置
+        const newX = currentX + offset.x;
+        const newY = currentY + offset.y;
+        
+        // 构建新的 transform 字符串，保留 scale
+        if (currentScale !== 1) {
+          g.attr('transform', `translate(${newX},${newY}) scale(${currentScale})`);
         } else {
-          g.attr('transform', `translate(${offset.x},${offset.y})`);
+          g.attr('transform', `translate(${newX},${newY})`);
         }
       });
       // 不需要调用render()，直接修改transform即可
