@@ -101,8 +101,20 @@ export class ColorSchemeManager {
 
     const colors = this.colorSchemes[schemeName] || this.colorSchemes.default;
     
+    // GC 轨道的默认颜色映射
+    const gcColorMap: Record<string, string> = {
+      'gc_content': '#4CAF50',
+      'gc_skew_plus': '#2196F3',
+      'gc_skew_minus': '#F44336'
+    };
+
     genome.tracks.forEach((track: any, index: number) => {
-      track.color = colors[index % colors.length];
+      // 如果是默认配色方案，且是GC相关轨道，则使用特定的默认颜色
+      if (schemeName === 'default' && gcColorMap[track.type]) {
+        track.color = gcColorMap[track.type];
+      } else {
+        track.color = colors[index % colors.length];
+      }
     });
 
     this.cgview.render();

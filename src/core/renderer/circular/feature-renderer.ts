@@ -337,19 +337,31 @@ export class FeatureRenderer {
   }
 
   renderCanvasMergedGCSkewFeatures(gcSkewFeatures: Array<{feature: any, value: number}>, gcSkewPlusTrack: Track, gcSkewMinusTrack: Track, currentRadius: number, trackHeight: number, genomeLength: number, featureContainer: PIXI.Container | undefined): void {
+    const middleRadius = currentRadius - trackHeight / 2;
     gcSkewFeatures.forEach(({ feature, value }) => {
-      const sA = (feature.start / genomeLength) * Math.PI * 2;
-      const eA = (feature.end   / genomeLength) * Math.PI * 2;
-      const maxH = trackHeight * RENDER_CONFIG.GC_MAX_BAR_HEIGHT_RATIO;
+      const rawStart = (feature.start / genomeLength) * Math.PI * 2;
+      const rawEnd   = (feature.end   / genomeLength) * Math.PI * 2;
+      const rawWidth = rawEnd - rawStart;
+
+      // 使用较小的gap，确保能够正常渲染，参考 GC Content 的处理
+      let gap = Math.min(RENDER_CONFIG.MAX_GAP_ANGLE, Math.max(RENDER_CONFIG.MIN_GAP_ANGLE, rawWidth * RENDER_CONFIG.GAP_ANGLE_RATIO));
+      gap = Math.min(gap, rawWidth * 0.1);
+
+      const sA = rawStart + gap;
+      const eA = rawEnd - gap;
+
+      if (eA <= sA) return;
+
+      const maxH = (trackHeight / 2) * RENDER_CONFIG.GC_MAX_BAR_HEIGHT_RATIO;
       const barH = Math.abs(value) * maxH / RENDER_CONFIG.GC_SKEW_RANGE;
       const g   = new PIXI.Graphics();
       if (value > 0) {
-        g.arc(this.centerX, this.centerY, currentRadius + barH, sA, eA, false);
-        g.arc(this.centerX, this.centerY, currentRadius, eA, sA, true);
+        g.arc(this.centerX, this.centerY, middleRadius + barH, sA, eA, false);
+        g.arc(this.centerX, this.centerY, middleRadius, eA, sA, true);
         g.fill({ color: hexToNumber(gcSkewPlusTrack.color), alpha: 0.8 });
       } else {
-        g.arc(this.centerX, this.centerY, currentRadius, sA, eA, false);
-        g.arc(this.centerX, this.centerY, currentRadius - barH, eA, sA, true);
+        g.arc(this.centerX, this.centerY, middleRadius, sA, eA, false);
+        g.arc(this.centerX, this.centerY, middleRadius - barH, eA, sA, true);
         g.fill({ color: hexToNumber(gcSkewMinusTrack.color), alpha: 0.8 });
       }
       featureContainer?.addChild(g);
@@ -358,20 +370,32 @@ export class FeatureRenderer {
 
   renderSvgMergedGCSkewFeatures(gcSkewFeatures: Array<{feature: any, value: number}>, gcSkewPlusTrack: Track, gcSkewMinusTrack: Track, currentRadius: number, trackHeight: number, genomeLength: number, svgContainer: d3.Selection<SVGElement, unknown, null, undefined> | undefined): void {
     if (!svgContainer) return;
+    const middleRadius = currentRadius - trackHeight / 2;
     const plusC  = this.ensureColorString(gcSkewPlusTrack.color);
     const minusC = this.ensureColorString(gcSkewMinusTrack.color);
     gcSkewFeatures.forEach(({ feature, value }) => {
-      const sA = (feature.start / genomeLength) * Math.PI * 2;
-      const eA = (feature.end   / genomeLength) * Math.PI * 2;
-      const maxH = trackHeight * RENDER_CONFIG.GC_MAX_BAR_HEIGHT_RATIO;
+      const rawStart = (feature.start / genomeLength) * Math.PI * 2;
+      const rawEnd   = (feature.end   / genomeLength) * Math.PI * 2;
+      const rawWidth = rawEnd - rawStart;
+
+      // 使用较小的gap，确保能够正常渲染，参考 GC Content 的处理
+      let gap = Math.min(RENDER_CONFIG.MAX_GAP_ANGLE, Math.max(RENDER_CONFIG.MIN_GAP_ANGLE, rawWidth * RENDER_CONFIG.GAP_ANGLE_RATIO));
+      gap = Math.min(gap, rawWidth * 0.1);
+
+      const sA = rawStart + gap;
+      const eA = rawEnd - gap;
+
+      if (eA <= sA) return;
+
+      const maxH = (trackHeight / 2) * RENDER_CONFIG.GC_MAX_BAR_HEIGHT_RATIO;
       const barH = Math.abs(value) * maxH / RENDER_CONFIG.GC_SKEW_RANGE;
       if (value > 0) {
         svgContainer.select('g#featureContainer').append('path')
-          .attr('d', createArcPath(this.centerX, this.centerY, currentRadius + barH, currentRadius, sA, eA))
+          .attr('d', createArcPath(this.centerX, this.centerY, middleRadius + barH, middleRadius, sA, eA))
           .attr('fill', plusC).attr('fill-opacity', 0.8);
       } else {
         svgContainer.select('g#featureContainer').append('path')
-          .attr('d', createArcPath(this.centerX, this.centerY, currentRadius, currentRadius - barH, sA, eA))
+          .attr('d', createArcPath(this.centerX, this.centerY, middleRadius, middleRadius - barH, sA, eA))
           .attr('fill', minusC).attr('fill-opacity', 0.8);
       }
     });
@@ -481,7 +505,9 @@ export class FeatureRenderer {
 
   renderCanvasGCContentFeature(_f: Feature, track: Track, radius: number, trackHeight: number, sA: number, eA: number, value: number, c?: PIXI.Container): void {
     const g = new PIXI.Graphics();
-    const maxH = trackHeight * RENDER_CONFIG.GC_MAX_BAR_HEIGHT_RATIO;
+    const middleRadius = radius - trackHeight / 2;
+    // 使用轨道高度的一半作为最大高度
+    const maxH = (trackHeight / 2) * RENDER_CONFIG.GC_MAX_BAR_HEIGHT_RATIO;
     const norm = (value - RENDER_CONFIG.GC_CONTENT_MIDPOINT) / RENDER_CONFIG.GC_CONTENT_NORMALIZATION;
     const barH = Math.abs(norm) * maxH;
     
@@ -490,12 +516,12 @@ export class FeatureRenderer {
     if (barH > minBarHeight) {
       // 确保半径计算正确
       if (norm > 0) {
-        const outerRadius = radius + barH;
-        const innerRadius = radius;
+        const outerRadius = middleRadius + barH;
+        const innerRadius = middleRadius;
         this.drawCanvasArc(g, outerRadius, innerRadius, sA, eA, track.color);
       } else {
-        const outerRadius = radius;
-        const innerRadius = radius - barH;
+        const outerRadius = middleRadius;
+        const innerRadius = middleRadius - barH;
         this.drawCanvasArc(g, outerRadius, innerRadius, sA, eA, track.color);
       }
       c?.addChild(g);
@@ -505,10 +531,12 @@ export class FeatureRenderer {
   renderSvgGCContentFeature(_f: Feature, track: Track, radius: number, trackHeight: number, sA: number, eA: number, value: number, svg?: d3.Selection<SVGElement, unknown, null, undefined>): void {
     if (!svg) return;
     const fill = this.ensureColorString(track.color);
-    const maxH = trackHeight * RENDER_CONFIG.GC_MAX_BAR_HEIGHT_RATIO;
+    const middleRadius = radius - trackHeight / 2;
+    // 使用轨道高度的一半作为最大高度
+    const maxH = (trackHeight / 2) * RENDER_CONFIG.GC_MAX_BAR_HEIGHT_RATIO;
     const norm = (value - RENDER_CONFIG.GC_CONTENT_MIDPOINT) / RENDER_CONFIG.GC_CONTENT_NORMALIZATION;
     const barH = Math.abs(norm) * maxH;
-    const [oR, iR] = norm > 0 ? [radius + barH, radius] : [radius, radius - barH];
+    const [oR, iR] = norm > 0 ? [middleRadius + barH, middleRadius] : [middleRadius, middleRadius - barH];
     svg.select('g#featureContainer').append('path')
       .attr('d', createArcPath(this.centerX, this.centerY, oR, iR, sA, eA))
       .attr('fill', fill).attr('fill-opacity', 0.8);
@@ -516,31 +544,43 @@ export class FeatureRenderer {
 
   renderCanvasGCSkewPlusFeature(_f: Feature, track: Track, radius: number, trackHeight: number, sA: number, eA: number, value: number, c?: PIXI.Container): void {
     const g = new PIXI.Graphics();
-    const h = Math.abs(value) * trackHeight * RENDER_CONFIG.GC_MAX_BAR_HEIGHT_RATIO / RENDER_CONFIG.GC_SKEW_RANGE;
-    this.drawCanvasArc(g, radius + h, radius, sA, eA, track.color);
+    const middleRadius = radius - trackHeight / 2;
+    // 使用轨道高度的一半作为最大高度
+    const maxH = (trackHeight / 2) * RENDER_CONFIG.GC_MAX_BAR_HEIGHT_RATIO;
+    const h = Math.abs(value) * maxH / RENDER_CONFIG.GC_SKEW_RANGE;
+    this.drawCanvasArc(g, middleRadius + h, middleRadius, sA, eA, track.color);
     c?.addChild(g);
   }
 
   renderCanvasGCSkewMinusFeature(_f: Feature, track: Track, radius: number, trackHeight: number, sA: number, eA: number, value: number, c?: PIXI.Container): void {
     const g = new PIXI.Graphics();
-    const h = Math.abs(value) * trackHeight * RENDER_CONFIG.GC_MAX_BAR_HEIGHT_RATIO / RENDER_CONFIG.GC_SKEW_RANGE;
-    this.drawCanvasArc(g, radius - trackHeight, radius - trackHeight - h, sA, eA, track.color);
+    const middleRadius = radius - trackHeight / 2;
+    // 使用轨道高度的一半作为最大高度
+    const maxH = (trackHeight / 2) * RENDER_CONFIG.GC_MAX_BAR_HEIGHT_RATIO;
+    const h = Math.abs(value) * maxH / RENDER_CONFIG.GC_SKEW_RANGE;
+    this.drawCanvasArc(g, middleRadius, middleRadius - h, sA, eA, track.color);
     c?.addChild(g);
   }
 
   renderSvgGCSkewPlusFeature(_f: Feature, track: Track, radius: number, trackHeight: number, sA: number, eA: number, value: number, svg?: d3.Selection<SVGElement, unknown, null, undefined>): void {
     if (!svg) return;
-    const h = Math.abs(value) * trackHeight * RENDER_CONFIG.GC_MAX_BAR_HEIGHT_RATIO / RENDER_CONFIG.GC_SKEW_RANGE;
+    const middleRadius = radius - trackHeight / 2;
+    // 使用轨道高度的一半作为最大高度
+    const maxH = (trackHeight / 2) * RENDER_CONFIG.GC_MAX_BAR_HEIGHT_RATIO;
+    const h = Math.abs(value) * maxH / RENDER_CONFIG.GC_SKEW_RANGE;
     svg.select('g#featureContainer').append('path')
-      .attr('d', createArcPath(this.centerX, this.centerY, radius + h, radius, sA, eA))
+      .attr('d', createArcPath(this.centerX, this.centerY, middleRadius + h, middleRadius, sA, eA))
       .attr('fill', this.ensureColorString(track.color)).attr('fill-opacity', 0.8);
   }
 
   renderSvgGCSkewMinusFeature(_f: Feature, track: Track, radius: number, trackHeight: number, sA: number, eA: number, value: number, svg?: d3.Selection<SVGElement, unknown, null, undefined>): void {
     if (!svg) return;
-    const h = Math.abs(value) * trackHeight * RENDER_CONFIG.GC_MAX_BAR_HEIGHT_RATIO / RENDER_CONFIG.GC_SKEW_RANGE;
+    const middleRadius = radius - trackHeight / 2;
+    // 使用轨道高度的一半作为最大高度
+    const maxH = (trackHeight / 2) * RENDER_CONFIG.GC_MAX_BAR_HEIGHT_RATIO;
+    const h = Math.abs(value) * maxH / RENDER_CONFIG.GC_SKEW_RANGE;
     svg.select('g#featureContainer').append('path')
-      .attr('d', createArcPath(this.centerX, this.centerY, radius - trackHeight, radius - trackHeight - h, sA, eA))
+      .attr('d', createArcPath(this.centerX, this.centerY, middleRadius, middleRadius - h, sA, eA))
       .attr('fill', this.ensureColorString(track.color)).attr('fill-opacity', 0.8);
   }
 
