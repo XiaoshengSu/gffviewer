@@ -12,6 +12,25 @@ export class LegendRenderer {
   }
   
   /**
+   * 格式化数值（添加千分位）
+   */
+  private formatNumber(num: number): string {
+    return num.toLocaleString();
+  }
+
+  /**
+   * 格式化碱基长度（bp -> kb -> Mb）
+   */
+  private formatLength(bp: number): string {
+    if (bp >= 1_000_000) {
+      return (bp / 1_000_000).toFixed(2) + ' Mb';
+    } else if (bp >= 1_000) {
+      return (bp / 1_000).toFixed(1) + ' kb';
+    }
+    return bp + ' bp';
+  }
+
+  /**
    * 渲染图例（Canvas）
    */
   renderCanvasLegend(genome: Genome | null, legendContainer: PIXI.Container | undefined): void {
@@ -23,78 +42,78 @@ export class LegendRenderer {
     const visibleTracks = genome.tracks.filter(track => track.visible);
     const legendItemCount = visibleTracks.length;
     
-    // 图例配置
-    const itemHeight = RENDER_CONFIG.LEGEND_ITEM_HEIGHT;
+    // 图例配置 - 使用统一的配置参数
+    const itemHeight = 46; // 固定高度以适应双行文本
     const legendWidth = RENDER_CONFIG.LEGEND_WIDTH;
+    const padding = RENDER_CONFIG.LEGEND_PADDING;
     
     // 图例位置：右侧，与圈图保持一定距离
-    // 动态计算图例位置，确保有足够的空间
     const legendX = Math.min(this.width - 200, this.width - legendWidth - RENDER_CONFIG.LEGEND_MARGIN);
     const legendY = 50;
     
     // 绘制图例拖拽区域（标题栏）
-    const dragAreaHeight = 32;
-    const contentHeight = 40 + legendItemCount * itemHeight;
+    const dragAreaHeight = 36;
+    const contentHeight = padding * 2 + legendItemCount * itemHeight; // 增加底部padding
     
-    // 绘制标题栏
-    const graphics = new PIXI.Graphics();
-    // 标题栏背景（顶部圆角，底部无圆角）
-    graphics.roundRect(legendX - RENDER_CONFIG.LEGEND_PADDING, legendY - RENDER_CONFIG.LEGEND_PADDING, legendWidth, dragAreaHeight, 6);
-    graphics.fill({ color: 0xf8f9fa }); // 更现代的浅灰色背景
-    graphics.setStrokeStyle({ width: 1, color: 0xe9ecef }); // 更柔和的边框颜色
+    // 绘制背景容器（包含标题栏和内容）
+    const container = new PIXI.Graphics();
     
-    // 绘制内容区域（顶部无圆角，底部圆角）
-    graphics.roundRect(legendX - RENDER_CONFIG.LEGEND_PADDING, legendY - RENDER_CONFIG.LEGEND_PADDING + dragAreaHeight - 1, legendWidth, contentHeight, 6);
-    // 重置顶部圆角为0
-    graphics.clear();
-    // 重新绘制标题栏（顶部圆角，底部无圆角）
-    graphics.beginFill(0xf8f9fa);
-    graphics.lineStyle(1, 0xe9ecef);
-    graphics.moveTo(legendX - RENDER_CONFIG.LEGEND_PADDING, legendY - RENDER_CONFIG.LEGEND_PADDING);
-    graphics.lineTo(legendX - RENDER_CONFIG.LEGEND_PADDING + legendWidth - 6, legendY - RENDER_CONFIG.LEGEND_PADDING);
-    graphics.quadraticCurveTo(legendX - RENDER_CONFIG.LEGEND_PADDING + legendWidth, legendY - RENDER_CONFIG.LEGEND_PADDING, legendX - RENDER_CONFIG.LEGEND_PADDING + legendWidth, legendY - RENDER_CONFIG.LEGEND_PADDING + 6);
-    graphics.lineTo(legendX - RENDER_CONFIG.LEGEND_PADDING + legendWidth, legendY - RENDER_CONFIG.LEGEND_PADDING + dragAreaHeight);
-    graphics.lineTo(legendX - RENDER_CONFIG.LEGEND_PADDING, legendY - RENDER_CONFIG.LEGEND_PADDING + dragAreaHeight);
-    graphics.lineTo(legendX - RENDER_CONFIG.LEGEND_PADDING, legendY - RENDER_CONFIG.LEGEND_PADDING + 6);
-    graphics.quadraticCurveTo(legendX - RENDER_CONFIG.LEGEND_PADDING, legendY - RENDER_CONFIG.LEGEND_PADDING, legendX - RENDER_CONFIG.LEGEND_PADDING + 6, legendY - RENDER_CONFIG.LEGEND_PADDING);
-    graphics.endFill();
+    // 1. 阴影层
+    container.roundRect(legendX + 2, legendY + 2, legendWidth, dragAreaHeight + contentHeight, 8);
+    container.fill({ color: 0x000000, alpha: 0.1 });
     
-    // 绘制内容区域（顶部无圆角，底部圆角）
-    graphics.beginFill(0xffffff);
-    graphics.lineStyle(1, 0xe9ecef);
-    graphics.moveTo(legendX - RENDER_CONFIG.LEGEND_PADDING, legendY - RENDER_CONFIG.LEGEND_PADDING + dragAreaHeight - 1);
-    graphics.lineTo(legendX - RENDER_CONFIG.LEGEND_PADDING + legendWidth, legendY - RENDER_CONFIG.LEGEND_PADDING + dragAreaHeight - 1);
-    graphics.lineTo(legendX - RENDER_CONFIG.LEGEND_PADDING + legendWidth, legendY - RENDER_CONFIG.LEGEND_PADDING + dragAreaHeight - 1 + contentHeight - 6);
-    graphics.quadraticCurveTo(legendX - RENDER_CONFIG.LEGEND_PADDING + legendWidth, legendY - RENDER_CONFIG.LEGEND_PADDING + dragAreaHeight - 1 + contentHeight, legendX - RENDER_CONFIG.LEGEND_PADDING + legendWidth - 6, legendY - RENDER_CONFIG.LEGEND_PADDING + dragAreaHeight - 1 + contentHeight);
-    graphics.lineTo(legendX - RENDER_CONFIG.LEGEND_PADDING + 6, legendY - RENDER_CONFIG.LEGEND_PADDING + dragAreaHeight - 1 + contentHeight);
-    graphics.quadraticCurveTo(legendX - RENDER_CONFIG.LEGEND_PADDING, legendY - RENDER_CONFIG.LEGEND_PADDING + dragAreaHeight - 1 + contentHeight, legendX - RENDER_CONFIG.LEGEND_PADDING, legendY - RENDER_CONFIG.LEGEND_PADDING + dragAreaHeight - 1 + contentHeight - 6);
-    graphics.lineTo(legendX - RENDER_CONFIG.LEGEND_PADDING, legendY - RENDER_CONFIG.LEGEND_PADDING + dragAreaHeight - 1);
-    graphics.endFill();
-    // 添加交互性，使图例可拖拽
-    graphics.eventMode = 'dynamic';
-    // 移除默认的移动鼠标效果，只有在拖拽时才显示
+    // 2. 主体背景（纯白）
+    container.roundRect(legendX, legendY, legendWidth, dragAreaHeight + contentHeight, 8);
+    container.fill({ color: 0xffffff });
+    container.stroke({ width: 1, color: 0xe9ecef });
+    
+    // 3. 标题栏背景（浅灰）
+    const titleHeader = new PIXI.Graphics();
+    titleHeader.roundRect(legendX, legendY, legendWidth, dragAreaHeight, 8); // 先画圆角
+    titleHeader.fill({ color: 0xf8f9fa });
+    
+    // 遮盖底部的圆角，变成直角
+    const titleMask = new PIXI.Graphics();
+    titleMask.rect(legendX, legendY + dragAreaHeight - 4, legendWidth, 4);
+    titleMask.fill({ color: 0xf8f9fa });
+    
+    // 添加分割线
+    const borderLine = new PIXI.Graphics();
+    borderLine.moveTo(legendX, legendY + dragAreaHeight);
+    borderLine.lineTo(legendX + legendWidth, legendY + dragAreaHeight);
+    borderLine.stroke({ width: 1, color: 0xe9ecef });
+
+    container.addChild(titleHeader);
+    container.addChild(titleMask);
+    container.addChild(borderLine);
+
+    // 添加交互性
+    container.eventMode = 'dynamic';
     
     // 拖拽逻辑
     let isDragging = false;
     let lastX = 0;
     let lastY = 0;
     
-    graphics.on('pointerdown', (event) => {
-      isDragging = true;
-      lastX = event.data.global.x;
-      lastY = event.data.global.y;
-      // 只有在按住鼠标时才显示移动鼠标效果
-      graphics.cursor = 'move';
+    // 只有标题栏区域响应拖拽
+    container.on('pointerdown', (event) => {
+      const localPoint = container.toLocal(event.global);
+      // 只有点击标题栏区域（高度范围内）才触发拖拽
+      if (localPoint.y <= dragAreaHeight) {
+        isDragging = true;
+        lastX = event.data.global.x;
+        lastY = event.data.global.y;
+        container.cursor = 'move';
+      }
     });
     
-    graphics.on('pointermove', (event) => {
+    container.on('pointermove', (event) => {
       if (isDragging) {
         const deltaX = event.data.global.x - lastX;
         const deltaY = event.data.global.y - lastY;
         lastX = event.data.global.x;
         lastY = event.data.global.y;
         
-        // 移动整个图例容器
         if (legendContainer) {
           legendContainer.position.x += deltaX;
           legendContainer.position.y += deltaY;
@@ -102,69 +121,89 @@ export class LegendRenderer {
       }
     });
     
-    graphics.on('pointerup', () => {
-      isDragging = false;
-      // 释放鼠标时恢复默认鼠标效果
-      graphics.cursor = 'default';
-    });
+    container.on('pointerup', () => { isDragging = false; container.cursor = 'default'; });
+    container.on('pointerupoutside', () => { isDragging = false; container.cursor = 'default'; });
     
-    graphics.on('pointerupoutside', () => {
-      isDragging = false;
-      // 释放鼠标时恢复默认鼠标效果
-      graphics.cursor = 'default';
-    });
-    
-    legendContainer.addChild(graphics);
+    legendContainer.addChild(container);
     
     // 绘制图例标题
     const title = new PIXI.Text({
-      text: 'Tracks',
+      text: 'Genome Features',
       style: {
-        fontSize: 14,
-        fontWeight: '600', // 使用600字体权重，比bold更现代
-        fill: 0x495057, // 稍浅的文字颜色，更现代
-        align: 'center',
-        fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif' // 使用现代无衬线字体
+        fontSize: 13,
+        fontWeight: '600',
+        fill: 0x343a40,
+        fontFamily: 'Inter, system-ui, sans-serif'
       }
     });
-    title.anchor.set(0.5, 0.5); // 中心锚点
-    title.position.set(legendX - RENDER_CONFIG.LEGEND_PADDING + legendWidth / 2, legendY - RENDER_CONFIG.LEGEND_PADDING + dragAreaHeight / 2); // 居中定位
+    title.anchor.set(0.5, 0.5);
+    title.position.set(legendX + legendWidth / 2, legendY + dragAreaHeight / 2);
     legendContainer.addChild(title);
     
-    // 绘制所有可见轨道的图例项
+    // 绘制图例项
     let currentItemIndex = 0;
+    const startY = legendY + dragAreaHeight + padding;
+    
     genome.tracks.forEach((track) => {
       if (!track.visible) return;
       
-      const itemY = legendY + 40 + currentItemIndex * itemHeight;
+      const itemY = startY + currentItemIndex * itemHeight;
       
-      // 绘制颜色块
-      const colorBlock = new PIXI.Graphics();
-      colorBlock.rect(legendX, itemY, 20, 15);
-      colorBlock.fill({ color: hexToNumber(track.color), alpha: 1 });
-      colorBlock.setStrokeStyle({ width: 1, color: 0x333333 });
-      legendContainer.addChild(colorBlock);
+      // 1. 绘制颜色指示器（圆形，带边框）
+      const colorDot = new PIXI.Graphics();
+      const dotRadius = 5;
+      const dotX = legendX + padding + dotRadius;
+      const dotY = itemY + 8 + dotRadius;
       
-      // 构建轨道文本，非GC轨道添加数量和长度统计
-      let trackTextContent = track.name;
-      if (track.type !== 'gc_content' && track.type !== 'gc_skew_plus' && track.type !== 'gc_skew_minus') {
-        // 计算轨道总长度（所有特征的长度之和）
-        const totalLength = track.features.reduce((sum, feature) => sum + (feature.end - feature.start), 0);
-        trackTextContent += ` (${track.features.length}, ${totalLength}bp)`;
-      }
+      // 绘制外圈边框
+      colorDot.circle(dotX, dotY, dotRadius + 1);
+      colorDot.fill({ color: 0xe9ecef });
       
-      // 绘制轨道名称
-      const trackText = new PIXI.Text({
-        text: trackTextContent,
+      // 绘制内圈颜色
+      colorDot.circle(dotX, dotY, dotRadius);
+      colorDot.fill({ color: hexToNumber(track.color) });
+      
+      legendContainer.addChild(colorDot);
+      
+      // 2. 轨道名称（第一行，加粗）
+      const nameText = new PIXI.Text({
+        text: track.name,
         style: {
-          fontSize: 12,
-          fill: 0x333333,
-          align: 'left'
+          fontSize: 13,
+          fontWeight: '500',
+          fill: 0x212529,
+          fontFamily: 'Inter, system-ui, sans-serif'
         }
       });
-      trackText.anchor.set(0, 0);
-      trackText.position.set(legendX + 30, itemY + 2);
-      legendContainer.addChild(trackText);
+      nameText.position.set(legendX + padding + 18, itemY + 2);
+      legendContainer.addChild(nameText);
+
+      // 3. 统计信息（第二行，灰色小字）
+      let statsContent = '';
+      
+      if (track.type === 'gc_content') {
+        // GC Content: 显示平均值（模拟数据，实际应从 Track 计算）
+        statsContent = 'Avg: ~50%'; 
+      } else if (track.type.includes('gc_skew')) {
+        // GC Skew: 显示范围
+        statsContent = 'Deviation metric';
+      } else {
+        // 普通特征：显示数量和总长度
+        const count = this.formatNumber(track.features.length);
+        const totalLen = track.features.reduce((sum, f) => sum + (f.end - f.start), 0);
+        statsContent = `${count} items | ${this.formatLength(totalLen)}`;
+      }
+
+      const statsText = new PIXI.Text({
+        text: statsContent,
+        style: {
+          fontSize: 11,
+          fill: 0x868e96, // 灰色
+          fontFamily: 'Inter, system-ui, sans-serif'
+        }
+      });
+      statsText.position.set(legendX + padding + 18, itemY + 20); // 放在名称下方
+      legendContainer.addChild(statsText);
       
       currentItemIndex++;
     });
@@ -183,9 +222,10 @@ export class LegendRenderer {
     const visibleTracks = genome.tracks.filter(track => track.visible);
     const legendItemCount = visibleTracks.length;
     
-    // 图例配置
-    const itemHeight = RENDER_CONFIG.LEGEND_ITEM_HEIGHT;
+    // 图例配置 - 使用与Canvas模式相同的参数
+    const itemHeight = 46; // 固定高度以适应双行文本
     const legendWidth = RENDER_CONFIG.LEGEND_WIDTH;
+    const padding = RENDER_CONFIG.LEGEND_PADDING;
     
     // 图例位置：右侧，与圈图保持一定距离
     // 动态计算图例位置，确保有足够的空间
@@ -196,37 +236,57 @@ export class LegendRenderer {
     const legendGroup = legendContainer.append('g');
     
     // 绘制图例拖拽区域（标题栏）
-    const dragAreaHeight = 32;
-    legendGroup.append('rect')
-      .attr('x', legendX - RENDER_CONFIG.LEGEND_PADDING)
-      .attr('y', legendY - RENDER_CONFIG.LEGEND_PADDING)
-      .attr('width', legendWidth)
-      .attr('height', dragAreaHeight)
-      .attr('fill', '#f8f9fa') // 更现代的浅灰色背景
-      .attr('fill-opacity', 1)
-      .attr('stroke', '#e9ecef') // 更柔和的边框颜色
-      .attr('stroke-width', 1)
-      .style('cursor', 'move')
-      .attr('id', 'legend-drag-area')
-      .attr('rx', '6') // 顶部圆角
-      .attr('ry', '0') // 底部圆角为0，与内容区域无缝连接
-      .style('box-shadow', '0 1px 3px rgba(0,0,0,0.1)') // 添加轻微阴影，增强层次感
-      .style('transition', 'background-color 0.2s ease'); // 添加过渡效果
+    const dragAreaHeight = 36;
+    const contentHeight = padding * 2 + legendItemCount * itemHeight; // 增加底部padding
     
-    // 绘制图例内容区域
-    const contentHeight = 40 + legendItemCount * itemHeight; // 更新内容高度计算
+    // 绘制阴影（模拟）
     legendGroup.append('rect')
-      .attr('x', legendX - RENDER_CONFIG.LEGEND_PADDING)
-      .attr('y', legendY - RENDER_CONFIG.LEGEND_PADDING + dragAreaHeight)
+      .attr('x', legendX + 2)
+      .attr('y', legendY + 2)
       .attr('width', legendWidth)
-      .attr('height', contentHeight)
+      .attr('height', dragAreaHeight + contentHeight)
+      .attr('rx', 8)
+      .attr('fill', '#000000')
+      .attr('fill-opacity', 0.1);
+
+    // 绘制主体背景（纯白）
+    legendGroup.append('rect')
+      .attr('x', legendX)
+      .attr('y', legendY)
+      .attr('width', legendWidth)
+      .attr('height', dragAreaHeight + contentHeight)
+      .attr('rx', 8)
       .attr('fill', '#ffffff')
-      .attr('fill-opacity', 1)
       .attr('stroke', '#e9ecef')
-      .attr('stroke-width', 1)
-      .attr('rx', '0') // 内容区域顶部圆角为0，与标题栏无缝连接
-      .attr('ry', '6') // 底部保持圆角
-      .style('box-shadow', '0 1px 3px rgba(0,0,0,0.1)'); // 添加轻微阴影
+      .attr('stroke-width', 1);
+
+    // 绘制标题栏背景（浅灰）
+    // 使用 path 绘制顶部圆角
+    const titlePath = `
+      M ${legendX} ${legendY + 8}
+      Q ${legendX} ${legendY} ${legendX + 8} ${legendY}
+      L ${legendX + legendWidth - 8} ${legendY}
+      Q ${legendX + legendWidth} ${legendY} ${legendX + legendWidth} ${legendY + 8}
+      L ${legendX + legendWidth} ${legendY + dragAreaHeight}
+      L ${legendX} ${legendY + dragAreaHeight}
+      Z
+    `;
+    
+    legendGroup.append('path')
+      .attr('d', titlePath)
+      .attr('fill', '#f8f9fa')
+      .attr('stroke', 'none')
+      .style('cursor', 'move')
+      .attr('id', 'legend-drag-area');
+
+    // 分割线
+    legendGroup.append('line')
+      .attr('x1', legendX)
+      .attr('y1', legendY + dragAreaHeight)
+      .attr('x2', legendX + legendWidth)
+      .attr('y2', legendY + dragAreaHeight)
+      .attr('stroke', '#e9ecef')
+      .attr('stroke-width', 1);
     
     // 添加交互性，使图例可拖拽（只有按住拖拽区域才能拖拽）
     let isDragging = false;
@@ -273,50 +333,73 @@ export class LegendRenderer {
     
     // 绘制图例标题
     legendGroup.append('text')
-      .text('Tracks')
-      .attr('x', legendX - RENDER_CONFIG.LEGEND_PADDING + legendWidth / 2) // 水平居中
-      .attr('y', legendY - RENDER_CONFIG.LEGEND_PADDING + dragAreaHeight / 2) // 垂直居中
-      .attr('font-size', '14px')
-      .attr('font-weight', '600') // 使用600字体权重，比bold更现代
-      .attr('fill', '#495057') // 稍浅的文字颜色，更现代
+      .text('Genome Features')
+      .attr('x', legendX + legendWidth / 2) // 水平居中
+      .attr('y', legendY + dragAreaHeight / 2) // 垂直居中
+      .attr('font-size', '13px')
+      .attr('font-weight', '600')
+      .attr('fill', '#343a40')
       .attr('text-anchor', 'middle') // 文本水平居中
       .attr('dominant-baseline', 'middle') // 文本垂直居中
-      .attr('font-family', 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif') // 使用现代无衬线字体
-      .attr('letter-spacing', '0.5px') // 添加轻微的字母间距，提高可读性
+      .attr('font-family', 'Inter, system-ui, sans-serif')
       .attr('user-select', 'none'); // 禁止文本选择，提高交互体验
     
     // 绘制所有可见轨道的图例项
     let currentItemIndex = 0;
+    const startY = legendY + dragAreaHeight + padding;
+
     genome.tracks.forEach((track) => {
       if (!track.visible) return;
       
-      const itemY = legendY + 40 + currentItemIndex * itemHeight; // 增加与标题的间距
+      const itemY = startY + currentItemIndex * itemHeight;
+      const dotX = legendX + padding + 5;
+      const dotY = itemY + 8 + 5;
       
-      // 绘制颜色块
-      legendGroup.append('rect')
-        .attr('x', legendX)
-        .attr('y', itemY)
-        .attr('width', 20)
-        .attr('height', 15)
-        .attr('fill', track.color)
-        .attr('stroke', '#333333')
-        .attr('stroke-width', 1);
+      // 1. 绘制颜色指示器（圆形，带边框）
+      // 绘制外圈边框
+      legendGroup.append('circle')
+        .attr('cx', dotX)
+        .attr('cy', dotY)
+        .attr('r', 6)
+        .attr('fill', '#e9ecef');
       
-      // 构建轨道文本，非GC轨道添加数量和长度统计
-      let trackTextContent = track.name;
-      if (track.type !== 'gc_content' && track.type !== 'gc_skew_plus' && track.type !== 'gc_skew_minus') {
-        // 计算轨道总长度（所有特征的长度之和）
-        const totalLength = track.features.reduce((sum, feature) => sum + (feature.end - feature.start), 0);
-        trackTextContent += ` (${track.features.length}, ${totalLength}bp)`;
-      }
+      // 绘制内圈颜色
+      legendGroup.append('circle')
+        .attr('cx', dotX)
+        .attr('cy', dotY)
+        .attr('r', 5)
+        .attr('fill', track.color);
       
-      // 绘制轨道名称
+      // 2. 轨道名称（第一行，加粗）
       legendGroup.append('text')
-        .text(trackTextContent)
-        .attr('x', legendX + 30)
+        .text(track.name)
+        .attr('x', legendX + padding + 18)
         .attr('y', itemY + 12)
-        .attr('font-size', '12px')
-        .attr('fill', '#333333')
+        .attr('font-size', '13px')
+        .attr('font-weight', '500')
+        .attr('fill', '#212529')
+        .attr('font-family', 'Inter, system-ui, sans-serif')
+        .attr('text-anchor', 'left');
+      
+      // 3. 统计信息（第二行，灰色小字）
+      let statsContent = '';
+      if (track.type === 'gc_content') {
+        statsContent = 'Avg: ~50%';
+      } else if (track.type.includes('gc_skew')) {
+        statsContent = 'Deviation metric';
+      } else {
+        const count = this.formatNumber(track.features.length);
+        const totalLen = track.features.reduce((sum, f) => sum + (f.end - f.start), 0);
+        statsContent = `${count} items | ${this.formatLength(totalLen)}`;
+      }
+
+      legendGroup.append('text')
+        .text(statsContent)
+        .attr('x', legendX + padding + 18)
+        .attr('y', itemY + 28) // 第二行位置
+        .attr('font-size', '11px')
+        .attr('fill', '#868e96')
+        .attr('font-family', 'Inter, system-ui, sans-serif')
         .attr('text-anchor', 'left');
       
       currentItemIndex++;
