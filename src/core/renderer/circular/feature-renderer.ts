@@ -14,7 +14,7 @@ export class FeatureRenderer {
   private highlightedFeature: any = null;
 
   // 每侧固定缝隙（屏幕像素），从基因自身弧长中扣除
-  private static readonly GAP_PX = 1.5;
+  // private static readonly GAP_PX = 1.5;
   // 短基因最小显示宽度（屏幕像素）
   private static readonly MIN_DISPLAY_PX = 2.0;
 
@@ -54,8 +54,7 @@ export class FeatureRenderer {
   private computeFeatureAngles(
     feature: Feature,
     genomeLength: number,
-    trackRadius: number,
-    featureCount: number = 1
+    trackRadius: number
   ): { startAngle: number; endAngle: number } {
 
     const rawStart = (feature.start / genomeLength) * Math.PI * 2;
@@ -106,56 +105,53 @@ export class FeatureRenderer {
 
       const visible = this.lodManager.filterFeatures(track.features, this.zoomLevel);
       const sorted  = [...visible].sort((a: Feature, b: Feature) => a.start - b.start);
-      const featureCount = visible.length;
 
       sorted.forEach((feature: Feature) => {
         feature.track = track;
-        this.renderCanvasAnnotationFeature(feature, track, currentRadius, trackHeight, genomeLength, featureCount, featureContainer);
-      });
-
-      currentRadius -= trackHeight + trackSpacing;
+        this.renderCanvasAnnotationFeature(feature, track, currentRadius, trackHeight, genomeLength, featureContainer);
     });
-    return currentRadius;
-  }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  //  渲染非GC轨道（SVG）
-  // ─────────────────────────────────────────────────────────────────────────
-  renderSvgNonGCTracks(
-    tracks: Track[], currentRadius: number, trackHeight: number,
-    trackSpacing: number, genomeLength: number,
-    svgContainer: d3.Selection<SVGElement, unknown, null, undefined> | undefined
-  ): number {
-    tracks.forEach((track) => {
-      this.renderSvgTrackBackground(currentRadius, trackHeight, track.color, track.type, svgContainer);
+    currentRadius -= trackHeight + trackSpacing;
+  });
+  return currentRadius;
+}
 
-      const visible = this.lodManager.filterFeatures(track.features, this.zoomLevel);
-      const sorted  = [...visible].sort((a: Feature, b: Feature) => a.start - b.start);
-      const featureCount = visible.length;
+// ─────────────────────────────────────────────────────────────────────────
+//  渲染非GC轨道（SVG）
+// ─────────────────────────────────────────────────────────────────────────
+renderSvgNonGCTracks(
+  tracks: Track[], currentRadius: number, trackHeight: number,
+  trackSpacing: number, genomeLength: number,
+  svgContainer: d3.Selection<SVGElement, unknown, null, undefined> | undefined
+): number {
+  tracks.forEach((track) => {
+    this.renderSvgTrackBackground(currentRadius, trackHeight, track.color, track.type, svgContainer);
 
-      sorted.forEach((feature: Feature) => {
-        feature.track = track;
-        this.renderSvgAnnotationFeature(feature, track, currentRadius, trackHeight, genomeLength, featureCount, svgContainer);
-      });
+    const visible = this.lodManager.filterFeatures(track.features, this.zoomLevel);
+    const sorted  = [...visible].sort((a: Feature, b: Feature) => a.start - b.start);
 
-      currentRadius -= trackHeight + trackSpacing;
+    sorted.forEach((feature: Feature) => {
+      feature.track = track;
+      this.renderSvgAnnotationFeature(feature, track, currentRadius, trackHeight, genomeLength, svgContainer);
     });
-    return currentRadius;
-  }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  //  渲染单个注解特征（Canvas）
-  //  采用线条方式渲染，类似GC Content，避免基因重叠
-  // ─────────────────────────────────────────────────────────────────────────
-  private renderCanvasAnnotationFeature(
-    feature: Feature, track: Track,
-    trackOuterRadius: number, trackHeight: number,
-    genomeLength: number,
-    featureCount: number,
-    featureContainer?: PIXI.Container
-  ): void {
-    const { startAngle, endAngle } =
-      this.computeFeatureAngles(feature, genomeLength, trackOuterRadius, featureCount);
+    currentRadius -= trackHeight + trackSpacing;
+  });
+  return currentRadius;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  渲染单个注解特征（Canvas）
+//  采用线条方式渲染，类似GC Content，避免基因重叠
+// ─────────────────────────────────────────────────────────────────────────
+private renderCanvasAnnotationFeature(
+  feature: Feature, track: Track,
+  trackOuterRadius: number, trackHeight: number,
+  genomeLength: number,
+  featureContainer?: PIXI.Container
+): void {
+  const { startAngle, endAngle } =
+    this.computeFeatureAngles(feature, genomeLength, trackOuterRadius);
 
     if (endAngle <= startAngle) return;
 
@@ -207,13 +203,12 @@ export class FeatureRenderer {
     feature: Feature, track: Track,
     trackOuterRadius: number, trackHeight: number,
     genomeLength: number,
-    featureCount: number,
     svgContainer?: d3.Selection<SVGElement, unknown, null, undefined>
   ): void {
     if (!svgContainer) return;
 
     const { startAngle, endAngle } =
-      this.computeFeatureAngles(feature, genomeLength, trackOuterRadius, featureCount);
+      this.computeFeatureAngles(feature, genomeLength, trackOuterRadius);
 
     if (endAngle <= startAngle) return;
 
@@ -262,6 +257,7 @@ export class FeatureRenderer {
   // ─────────────────────────────────────────────────────────────────────────
   //  绘制弧段（高亮时径向扩展 +2px）
   // ─────────────────────────────────────────────────────────────────────────
+  /*
   private drawArc(
     graphics: PIXI.Graphics,
     outerRadius: number, trackHeight: number,
@@ -276,6 +272,7 @@ export class FeatureRenderer {
     graphics.arc(this.centerX, this.centerY, iR, eA, sA, true);
     graphics.fill({ color, alpha: 1 });
   }
+  */
 
   // ─────────────────────────────────────────────────────────────────────────
   //  绘制线条弧段（用于基因渲染，类似GC Content）
@@ -338,6 +335,10 @@ export class FeatureRenderer {
 
   renderCanvasMergedGCSkewFeatures(gcSkewFeatures: Array<{feature: any, value: number}>, gcSkewPlusTrack: Track, gcSkewMinusTrack: Track, currentRadius: number, trackHeight: number, genomeLength: number, featureContainer: PIXI.Container | undefined): void {
     const middleRadius = currentRadius - trackHeight / 2;
+    const maxH = (trackHeight / 2) * RENDER_CONFIG.GC_MAX_BAR_HEIGHT_RATIO;
+    const plusColor = hexToNumber(gcSkewPlusTrack.color);
+    const minusColor = hexToNumber(gcSkewMinusTrack.color);
+
     gcSkewFeatures.forEach(({ feature, value }) => {
       const rawStart = (feature.start / genomeLength) * Math.PI * 2;
       const rawEnd   = (feature.end   / genomeLength) * Math.PI * 2;
@@ -352,18 +353,29 @@ export class FeatureRenderer {
 
       if (eA <= sA) return;
 
-      const maxH = (trackHeight / 2) * RENDER_CONFIG.GC_MAX_BAR_HEIGHT_RATIO;
       const barH = Math.abs(value) * maxH / RENDER_CONFIG.GC_SKEW_RANGE;
       const g   = new PIXI.Graphics();
-      if (value > 0) {
-        g.arc(this.centerX, this.centerY, middleRadius + barH, sA, eA, false);
-        g.arc(this.centerX, this.centerY, middleRadius, eA, sA, true);
-        g.fill({ color: hexToNumber(gcSkewPlusTrack.color), alpha: 0.8 });
-      } else {
-        g.arc(this.centerX, this.centerY, middleRadius, sA, eA, false);
-        g.arc(this.centerX, this.centerY, middleRadius - barH, eA, sA, true);
-        g.fill({ color: hexToNumber(gcSkewMinusTrack.color), alpha: 0.8 });
-      }
+      const color = value > 0 ? plusColor : minusColor;
+      
+      const draw = (graphics: PIXI.Graphics, highlighted: boolean) => {
+        const hOffset = highlighted ? 2 : 0;
+        // 移除角度偏移，避免视觉上的晃动
+        const aOffset = 0;
+        const start = sA - aOffset;
+        const end = eA + aOffset;
+
+        if (value > 0) {
+          graphics.arc(this.centerX, this.centerY, middleRadius + barH + hOffset, start, end, false);
+          graphics.arc(this.centerX, this.centerY, middleRadius - hOffset, end, start, true);
+        } else {
+          graphics.arc(this.centerX, this.centerY, middleRadius + hOffset, start, end, false);
+          graphics.arc(this.centerX, this.centerY, middleRadius - barH - hOffset, end, start, true);
+        }
+        graphics.fill({ color: color, alpha: highlighted ? 1 : 0.8 });
+      };
+
+      draw(g, this.checkHighlighted(feature));
+      this.addCanvasInteraction(g, feature, draw);
       featureContainer?.addChild(g);
     });
   }
@@ -373,6 +385,8 @@ export class FeatureRenderer {
     const middleRadius = currentRadius - trackHeight / 2;
     const plusC  = this.ensureColorString(gcSkewPlusTrack.color);
     const minusC = this.ensureColorString(gcSkewMinusTrack.color);
+    const maxH = (trackHeight / 2) * RENDER_CONFIG.GC_MAX_BAR_HEIGHT_RATIO;
+
     gcSkewFeatures.forEach(({ feature, value }) => {
       const rawStart = (feature.start / genomeLength) * Math.PI * 2;
       const rawEnd   = (feature.end   / genomeLength) * Math.PI * 2;
@@ -387,24 +401,35 @@ export class FeatureRenderer {
 
       if (eA <= sA) return;
 
-      const maxH = (trackHeight / 2) * RENDER_CONFIG.GC_MAX_BAR_HEIGHT_RATIO;
       const barH = Math.abs(value) * maxH / RENDER_CONFIG.GC_SKEW_RANGE;
-      if (value > 0) {
-        svgContainer.select('g#featureContainer').append('path')
-          .attr('d', createArcPath(this.centerX, this.centerY, middleRadius + barH, middleRadius, sA, eA))
-          .attr('fill', plusC).attr('fill-opacity', 0.8);
-      } else {
-        svgContainer.select('g#featureContainer').append('path')
-          .attr('d', createArcPath(this.centerX, this.centerY, middleRadius, middleRadius - barH, sA, eA))
-          .attr('fill', minusC).attr('fill-opacity', 0.8);
-      }
+      const color = value > 0 ? plusC : minusC;
+
+      const getPath = (highlighted: boolean) => {
+        const hOffset = highlighted ? 2 : 0;
+        // 移除角度偏移，避免视觉上的晃动
+        const aOffset = 0;
+        const start = sA - aOffset;
+        const end = eA + aOffset;
+
+        if (value > 0) {
+          return createArcPath(this.centerX, this.centerY, middleRadius + barH + hOffset, middleRadius - hOffset, start, end);
+        } else {
+          return createArcPath(this.centerX, this.centerY, middleRadius + hOffset, middleRadius - barH - hOffset, start, end);
+        }
+      };
+
+      const el = svgContainer.select('g#featureContainer').append('path')
+        .attr('d', getPath(this.checkHighlighted(feature)))
+        .attr('fill', color).attr('fill-opacity', this.checkHighlighted(feature) ? 1 : 0.8);
+      
+      this.addSvgInteraction(el, feature, getPath);
     });
   }
 
   // ─────────────────────────────────────────────────────────────────────────
   //  轨道背景（白色描边清晰区分轨道层次）
   // ─────────────────────────────────────────────────────────────────────────
-  renderCanvasTrackBackground(radius: number, trackHeight: number, _color: string | number, trackType?: string, featureContainer?: PIXI.Container): void {
+  renderCanvasTrackBackground(radius: number, trackHeight: number, _color: string | number, _trackType?: string, featureContainer?: PIXI.Container): void {
     const g = new PIXI.Graphics();
     const innerRadius = radius - trackHeight;
     
@@ -428,7 +453,7 @@ export class FeatureRenderer {
     featureContainer?.addChild(g);
   }
 
-  renderSvgTrackBackground(radius: number, trackHeight: number, _color: string | number, trackType?: string, svgContainer?: d3.Selection<SVGElement, unknown, null, undefined>): void {
+  renderSvgTrackBackground(radius: number, trackHeight: number, _color: string | number, _trackType?: string, svgContainer?: d3.Selection<SVGElement, unknown, null, undefined>): void {
     if (!svgContainer) return;
     const g = svgContainer.select('g#featureContainer');
     const innerRadius = radius - trackHeight;
@@ -514,16 +539,26 @@ export class FeatureRenderer {
     // 确保barH大于一个最小阈值，避免绘制实心圆环
     const minBarHeight = 0.1; // 最小条形高度阈值
     if (barH > minBarHeight) {
-      // 确保半径计算正确
-      if (norm > 0) {
-        const outerRadius = middleRadius + barH;
-        const innerRadius = middleRadius;
-        this.drawCanvasArc(g, outerRadius, innerRadius, sA, eA, track.color);
-      } else {
-        const outerRadius = middleRadius;
-        const innerRadius = middleRadius - barH;
-        this.drawCanvasArc(g, outerRadius, innerRadius, sA, eA, track.color);
-      }
+      const draw = (graphics: PIXI.Graphics, highlighted: boolean) => {
+        const hOffset = highlighted ? 2 : 0;
+        // 移除角度偏移，避免视觉上的晃动
+        const aOffset = 0;
+        const start = sA - aOffset;
+        const end = eA + aOffset;
+
+        if (norm > 0) {
+          const outerRadius = middleRadius + barH + hOffset;
+          const innerRadius = middleRadius - hOffset;
+          this.drawCanvasArc(graphics, outerRadius, innerRadius, start, end, track.color);
+        } else {
+          const outerRadius = middleRadius + hOffset;
+          const innerRadius = middleRadius - barH - hOffset;
+          this.drawCanvasArc(graphics, outerRadius, innerRadius, start, end, track.color);
+        }
+      };
+
+      draw(g, this.checkHighlighted(_f));
+      this.addCanvasInteraction(g, _f, draw);
       c?.addChild(g);
     }
   }
@@ -536,10 +571,25 @@ export class FeatureRenderer {
     const maxH = (trackHeight / 2) * RENDER_CONFIG.GC_MAX_BAR_HEIGHT_RATIO;
     const norm = (value - RENDER_CONFIG.GC_CONTENT_MIDPOINT) / RENDER_CONFIG.GC_CONTENT_NORMALIZATION;
     const barH = Math.abs(norm) * maxH;
-    const [oR, iR] = norm > 0 ? [middleRadius + barH, middleRadius] : [middleRadius, middleRadius - barH];
-    svg.select('g#featureContainer').append('path')
-      .attr('d', createArcPath(this.centerX, this.centerY, oR, iR, sA, eA))
-      .attr('fill', fill).attr('fill-opacity', 0.8);
+    
+    const getPath = (highlighted: boolean) => {
+      const hOffset = highlighted ? 2 : 0;
+      // 移除角度偏移，避免视觉上的晃动
+      const aOffset = 0;
+      const start = sA - aOffset;
+      const end = eA + aOffset;
+      
+      const [oR, iR] = norm > 0 
+        ? [middleRadius + barH + hOffset, middleRadius - hOffset] 
+        : [middleRadius + hOffset, middleRadius - barH - hOffset];
+      return createArcPath(this.centerX, this.centerY, oR, iR, start, end);
+    };
+
+    const el = svg.select('g#featureContainer').append('path')
+      .attr('d', getPath(this.checkHighlighted(_f)))
+      .attr('fill', fill).attr('fill-opacity', this.checkHighlighted(_f) ? 1 : 0.8);
+      
+    this.addSvgInteraction(el, _f, getPath);
   }
 
   renderCanvasGCSkewPlusFeature(_f: Feature, track: Track, radius: number, trackHeight: number, sA: number, eA: number, value: number, c?: PIXI.Container): void {
@@ -548,7 +598,18 @@ export class FeatureRenderer {
     // 使用轨道高度的一半作为最大高度
     const maxH = (trackHeight / 2) * RENDER_CONFIG.GC_MAX_BAR_HEIGHT_RATIO;
     const h = Math.abs(value) * maxH / RENDER_CONFIG.GC_SKEW_RANGE;
-    this.drawCanvasArc(g, middleRadius + h, middleRadius, sA, eA, track.color);
+    
+    const draw = (graphics: PIXI.Graphics, highlighted: boolean) => {
+      const hOffset = highlighted ? 2 : 0;
+      // 移除角度偏移，避免视觉上的晃动
+      const aOffset = 0;
+      const start = sA - aOffset;
+      const end = eA + aOffset;
+      this.drawCanvasArc(graphics, middleRadius + h + hOffset, middleRadius - hOffset, start, end, track.color);
+    };
+
+    draw(g, this.checkHighlighted(_f));
+    this.addCanvasInteraction(g, _f, draw);
     c?.addChild(g);
   }
 
@@ -558,7 +619,18 @@ export class FeatureRenderer {
     // 使用轨道高度的一半作为最大高度
     const maxH = (trackHeight / 2) * RENDER_CONFIG.GC_MAX_BAR_HEIGHT_RATIO;
     const h = Math.abs(value) * maxH / RENDER_CONFIG.GC_SKEW_RANGE;
-    this.drawCanvasArc(g, middleRadius, middleRadius - h, sA, eA, track.color);
+    
+    const draw = (graphics: PIXI.Graphics, highlighted: boolean) => {
+      const hOffset = highlighted ? 2 : 0;
+      // 移除角度偏移，避免视觉上的晃动
+      const aOffset = 0;
+      const start = sA - aOffset;
+      const end = eA + aOffset;
+      this.drawCanvasArc(graphics, middleRadius + hOffset, middleRadius - h - hOffset, start, end, track.color);
+    };
+
+    draw(g, this.checkHighlighted(_f));
+    this.addCanvasInteraction(g, _f, draw);
     c?.addChild(g);
   }
 
@@ -568,9 +640,21 @@ export class FeatureRenderer {
     // 使用轨道高度的一半作为最大高度
     const maxH = (trackHeight / 2) * RENDER_CONFIG.GC_MAX_BAR_HEIGHT_RATIO;
     const h = Math.abs(value) * maxH / RENDER_CONFIG.GC_SKEW_RANGE;
-    svg.select('g#featureContainer').append('path')
-      .attr('d', createArcPath(this.centerX, this.centerY, middleRadius + h, middleRadius, sA, eA))
-      .attr('fill', this.ensureColorString(track.color)).attr('fill-opacity', 0.8);
+    
+    const getPath = (highlighted: boolean) => {
+      const hOffset = highlighted ? 2 : 0;
+      // 移除角度偏移，避免视觉上的晃动
+      const aOffset = 0;
+      const start = sA - aOffset;
+      const end = eA + aOffset;
+      return createArcPath(this.centerX, this.centerY, middleRadius + h + hOffset, middleRadius - hOffset, start, end);
+    };
+
+    const el = svg.select('g#featureContainer').append('path')
+      .attr('d', getPath(this.checkHighlighted(_f)))
+      .attr('fill', this.ensureColorString(track.color)).attr('fill-opacity', this.checkHighlighted(_f) ? 1 : 0.8);
+      
+    this.addSvgInteraction(el, _f, getPath);
   }
 
   renderSvgGCSkewMinusFeature(_f: Feature, track: Track, radius: number, trackHeight: number, sA: number, eA: number, value: number, svg?: d3.Selection<SVGElement, unknown, null, undefined>): void {
@@ -579,9 +663,21 @@ export class FeatureRenderer {
     // 使用轨道高度的一半作为最大高度
     const maxH = (trackHeight / 2) * RENDER_CONFIG.GC_MAX_BAR_HEIGHT_RATIO;
     const h = Math.abs(value) * maxH / RENDER_CONFIG.GC_SKEW_RANGE;
-    svg.select('g#featureContainer').append('path')
-      .attr('d', createArcPath(this.centerX, this.centerY, middleRadius, middleRadius - h, sA, eA))
-      .attr('fill', this.ensureColorString(track.color)).attr('fill-opacity', 0.8);
+    
+    const getPath = (highlighted: boolean) => {
+      const hOffset = highlighted ? 2 : 0;
+      // 移除角度偏移，避免视觉上的晃动
+      const aOffset = 0;
+      const start = sA - aOffset;
+      const end = eA + aOffset;
+      return createArcPath(this.centerX, this.centerY, middleRadius + hOffset, middleRadius - h - hOffset, start, end);
+    };
+
+    const el = svg.select('g#featureContainer').append('path')
+      .attr('d', getPath(this.checkHighlighted(_f)))
+      .attr('fill', this.ensureColorString(track.color)).attr('fill-opacity', this.checkHighlighted(_f) ? 1 : 0.8);
+      
+    this.addSvgInteraction(el, _f, getPath);
   }
 
   drawCanvasArc(graphics: PIXI.Graphics, oR: number, iR: number, sA: number, eA: number, color: string | number): void {
@@ -596,10 +692,6 @@ export class FeatureRenderer {
     // 计算路径点
     const startOuterX = this.centerX + Math.cos(startAngle) * oR;
     const startOuterY = this.centerY + Math.sin(startAngle) * oR;
-    const endOuterX = this.centerX + Math.cos(endAngle) * oR;
-    const endOuterY = this.centerY + Math.sin(endAngle) * oR;
-    const startInnerX = this.centerX + Math.cos(startAngle) * iR;
-    const startInnerY = this.centerY + Math.sin(startAngle) * iR;
     const endInnerX = this.centerX + Math.cos(endAngle) * iR;
     const endInnerY = this.centerY + Math.sin(endAngle) * iR;
     
@@ -635,6 +727,37 @@ export class FeatureRenderer {
     graphics.lineTo(startOuterX, startOuterY);
     
     graphics.endFill();
+  }
+
+  private addCanvasInteraction(g: PIXI.Graphics, feature: Feature, drawFn: (g: PIXI.Graphics, highlighted: boolean) => void) {
+    g.eventMode = 'dynamic';
+    g.cursor = 'pointer';
+    g.on('pointerover', () => {
+      g.clear();
+      drawFn(g, true);
+      if (this.onHover) this.onHover(feature);
+    });
+    g.on('pointerout', () => {
+      const still = this.checkHighlighted(feature);
+      g.clear();
+      drawFn(g, still);
+      if (this.onHover && !still) this.onHover(null);
+    });
+    g.on('pointerdown', () => console.log('Feature clicked:', feature));
+  }
+
+  private addSvgInteraction(el: d3.Selection<any, unknown, null, undefined>, feature: Feature, getPathFn: (highlighted: boolean) => string) {
+    el.style('cursor', 'pointer')
+      .on('mouseover', () => {
+        el.attr('d', getPathFn(true)).attr('fill-opacity', 1).attr('stroke', 'none');
+        if (this.onHover) this.onHover(feature);
+      })
+      .on('mouseout', () => {
+        const still = this.checkHighlighted(feature);
+        el.attr('d', getPathFn(still)).attr('fill-opacity', still ? 1 : 0.8).attr('stroke', 'none');
+        if (this.onHover && !still) this.onHover(null);
+      })
+      .on('mousedown', () => console.log('Feature clicked:', feature));
   }
 
   private checkHighlighted(feature: Feature): boolean {

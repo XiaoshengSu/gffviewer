@@ -93,7 +93,7 @@ export class ColorSchemeManager {
   /**
    * 应用配色方案
    */
-  private applyColorScheme(schemeName: string) {
+  public applyColorScheme(schemeName: string) {
     if (!this.cgview) return;
 
     const genome = this.cgview.getGenome();
@@ -101,18 +101,51 @@ export class ColorSchemeManager {
 
     const colors = this.colorSchemes[schemeName] || this.colorSchemes.default;
     
-    // GC 轨道的默认颜色映射
-    const gcColorMap: Record<string, string> = {
+    // 生物学特征默认颜色映射（Semantic Colors）
+    // 参考常见的生信软件（如 Circos, CGView）和 D3 配色标准
+    const bioColorMap: Record<string, string> = {
+      // 核心特征
+      'CDS': '#1f77b4',           // 蓝色 (SteelBlue/D3 Blue) - 编码区主体，稳重清晰
+      'gene': '#2ca02c',          // 绿色 (D3 Green) - 基因通用色
+      
+      // RNA 相关
+      'tRNA': '#d62728',          // 红色 (D3 Red) - 醒目，便于在全基因组中定位稀疏分布的 tRNA
+      'rRNA': '#ff7f0e',          // 橙色 (D3 Orange) - 与 tRNA 区分，同样醒目
+      'tmRNA': '#9467bd',         // 紫色 (D3 Purple) - 特殊 RNA
+      'misc_RNA': '#8c564b',      // 棕色 (D3 Brown) - 其他 RNA
+      
+      // 结构/其他
+      'repeat_region': '#e377c2', // 粉色 (D3 Pink) - 重复序列
+      'mobile_element': '#7f7f7f',// 灰色 - 移动元件
+      
+      // GC 相关 (保持之前的用户习惯或优化)
+      'gc_content': '#333333',    // 深灰/黑色 - 密度图通常用深色，或者保持之前的绿色 #4CAF50
+      'gc_skew_plus': '#2ca02c',  // 绿色 - G-rich (Leading strand) 常见用绿色/橄榄色
+      'gc_skew_minus': '#9467bd', // 紫色 - C-rich (Lagging strand) 常见用紫色/红色
+    };
+
+    // 兼容旧的 GC 习惯配置（如果用户更喜欢之前的亮色）
+    const legacyGcColorMap: Record<string, string> = {
       'gc_content': '#4CAF50',
       'gc_skew_plus': '#2196F3',
       'gc_skew_minus': '#F44336'
     };
+    
+    // 合并配置
+    Object.assign(bioColorMap, legacyGcColorMap); 
 
     genome.tracks.forEach((track: any, index: number) => {
-      // 如果是默认配色方案，且是GC相关轨道，则使用特定的默认颜色
-      if (schemeName === 'default' && gcColorMap[track.type]) {
-        track.color = gcColorMap[track.type];
+      // 在 default 模式下，优先使用语义化配色
+      if (schemeName === 'default') {
+        if (bioColorMap[track.type]) {
+          track.color = bioColorMap[track.type];
+        } else {
+          // 未知类型使用轮询配色，但跳过前几个已经被语义化占用的颜色，避免混淆
+          // 这里简单使用 index 轮询
+          track.color = colors[index % colors.length];
+        }
       } else {
+        // 其他配色方案（如 Viridis）则完全遵循数学色阶，忽略语义
         track.color = colors[index % colors.length];
       }
     });

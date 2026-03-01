@@ -153,6 +153,9 @@ requestAnimationFrame(async () => {
       await cgview.loadGenome(content, 'gff3');
       console.log('Demo data loaded successfully');
       
+      // 应用默认配色方案，确保与UI配置一致
+      colorSchemeManager.applyColorScheme('default');
+      
       // 响应窗口大小变化
       window.addEventListener('resize', () => {
         const newWidth = Math.max(container.clientWidth || 800, 800);
