@@ -164,7 +164,9 @@ export class SidebarManager {
     
     const query = (this.geneSearchInput as HTMLInputElement).value.trim();
     if (!query) {
+      // 搜索框为空时隐藏结果区域
       this.searchResults.innerHTML = '';
+      this.searchResults.style.display = 'none';
       return;
     }
     
@@ -177,36 +179,38 @@ export class SidebarManager {
    * 显示搜索结果
    */
   private displaySearchResults(results: any[]) {
+    // 清空搜索结果区域
     this.searchResults.innerHTML = '';
     
-    if (results.length === 0) {
-      const noResult = document.createElement('div');
-      noResult.className = 'search-result-item';
-      noResult.textContent = 'No results found';
-      this.searchResults.appendChild(noResult);
-      return;
-    }
-    
-    results.forEach((feature) => {
-      const resultItem = document.createElement('div');
-      resultItem.className = 'search-result-item';
+    // 只有当有结果时才显示结果区域
+    if (results.length > 0) {
+      // 显示结果区域
+      this.searchResults.style.display = 'block';
       
-      const geneName = feature.name || feature.id || 'Unnamed gene';
-      const position = `${feature.start} - ${feature.end}`;
-      
-      resultItem.innerHTML = `
-        <div class="result-name">${geneName}</div>
-        <div class="result-position">${position}</div>
-      `;
-      
-      // 点击结果项时，触发hover效果
-      resultItem.addEventListener('click', () => {
-        // 触发hover事件，显示高亮效果
-        this.cgview?.highlightFeature(feature);
+      results.forEach((feature) => {
+        const resultItem = document.createElement('div');
+        resultItem.className = 'search-result-item';
+        
+        const geneName = feature.name || feature.id || 'Unnamed gene';
+        const position = `${feature.start} - ${feature.end}`;
+        
+        resultItem.innerHTML = `
+          <div class="result-name">${geneName}</div>
+          <div class="result-position">${position}</div>
+        `;
+        
+        // 点击结果项时，触发hover效果
+        resultItem.addEventListener('click', () => {
+          // 触发hover事件，显示高亮效果
+          this.cgview?.highlightFeature(feature);
+        });
+        
+        this.searchResults.appendChild(resultItem);
       });
-      
-      this.searchResults.appendChild(resultItem);
-    });
+    } else {
+      // 没有结果时隐藏结果区域
+      this.searchResults.style.display = 'none';
+    }
   }
   
   /**

@@ -14,7 +14,7 @@ export class ControlsManager {
   private fullscreenBtn: HTMLElement;
   private exportSvgBtn: HTMLElement;
   private gffFileInput: HTMLInputElement;
-  private dropArea: HTMLElement;
+  private dropArea: HTMLElement | null;
   private legendVisible = true;
   private labelsVisible = true;
   private currentZoom = 1;
@@ -28,7 +28,7 @@ export class ControlsManager {
     this.fullscreenBtn = document.getElementById('fullscreen-btn')!;
     this.exportSvgBtn = document.getElementById('export-svg-btn')!;
     this.gffFileInput = document.getElementById('gff-file-input')! as HTMLInputElement;
-    this.dropArea = document.getElementById('drop-area')!;
+    this.dropArea = document.getElementById('drop-area');
 
     this.initEventListeners();
   }
@@ -151,28 +151,32 @@ export class ControlsManager {
       }
     });
     
-    // 拖放区域
-    // 阻止默认拖放行为
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-      this.dropArea.addEventListener(eventName, this.preventDefaults, false);
-    });
+    // 拖放区域 - 只有当 dropArea 存在时才添加事件监听器
+    if (this.dropArea) {
+      // 阻止默认拖放行为
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        this.dropArea!.addEventListener(eventName, this.preventDefaults, false);
+      });
+      
+      // 高亮拖放区域
+      ['dragenter', 'dragover'].forEach(eventName => {
+        this.dropArea!.addEventListener(eventName, this.highlight, false);
+      });
+      
+      ['dragleave', 'drop'].forEach(eventName => {
+        this.dropArea!.addEventListener(eventName, this.unhighlight, false);
+      });
+      
+      // 处理拖放的文件
+      this.dropArea.addEventListener('drop', this.handleDrop, false);
+    }
     
-    // 高亮拖放区域
-    ['dragenter', 'dragover'].forEach(eventName => {
-      this.dropArea.addEventListener(eventName, this.highlight, false);
-    });
-    
-    ['dragleave', 'drop'].forEach(eventName => {
-      this.dropArea.addEventListener(eventName, this.unhighlight, false);
-    });
-    
-    // 处理拖放的文件
-    this.dropArea.addEventListener('drop', this.handleDrop.bind(this), false);
-    
-    // 点击拖放区域打开文件选择
-    this.dropArea.addEventListener('click', () => {
-      this.gffFileInput.click();
-    });
+    // 点击拖放区域打开文件选择 - 只有当 dropArea 存在时才添加事件监听器
+    if (this.dropArea) {
+      this.dropArea.addEventListener('click', () => {
+        this.gffFileInput.click();
+      });
+    }
   }
 
   /**
@@ -187,14 +191,18 @@ export class ControlsManager {
    * 高亮拖放区域
    */
   private highlight() {
-    this.dropArea.classList.add('highlight');
+    if (this.dropArea) {
+      this.dropArea.classList.add('highlight');
+    }
   }
 
   /**
    * 取消高亮拖放区域
    */
   private unhighlight() {
-    this.dropArea.classList.remove('highlight');
+    if (this.dropArea) {
+      this.dropArea.classList.remove('highlight');
+    }
   }
 
   /**
