@@ -1,12 +1,23 @@
 {
   "name": "gffviewer",
-  "private": true,
-  "version": "0.0.0",
+  "private": false,
+  "version": "1.0.0",
   "type": "module",
+  "main": "./dist/gffviewer.umd.cjs",
+  "module": "./dist/gffviewer.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/gffviewer.js",
+      "require": "./dist/gffviewer.umd.cjs"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prepare": "npm run build"
   },
   "devDependencies": {
     "typescript": "~5.9.3",

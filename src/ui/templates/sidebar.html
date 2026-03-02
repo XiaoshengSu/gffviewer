@@ -9,9 +9,6 @@
     <div class="header-top-row">
       <h1 class="app-title">gff Viewer</h1>
       <div class="top-row-actions">
-        <button id="fullscreen-btn" class="btn btn-md btn-icon" aria-label="Fullscreen">
-          <span class="btn-icon">⛶</span>
-        </button>
         <button id="sidebar-collapse-btn" class="btn btn-md btn-icon" aria-label="Collapse sidebar">
           <span class="btn-icon">-</span>
         </button>
@@ -19,18 +16,18 @@
     </div>
 
   </div>
-    <div class="header-bottom-row sidebar-section-nopadding">
-      <!-- 文件上传 -->
-      <label class="file-input-label" for="gff-file-input" aria-label="Upload GFF file">
-        <span class="btn-icon">📂</span>
-        <span class="btn-text">上传GFF</span>
-        <input type="file" id="gff-file-input" accept=".gff,.gff3" class="file-input" />
-      </label>
-      <button id="export-svg-btn" class="btn btn-lg btn-icon-text" aria-label="Export SVG">
-        <span class="btn-icon">📤</span>
-        <span class="btn-text">导出SVG</span>
-      </button>
-    </div>
+  <div class="control-item control-buttons-row sidebar-section-nopadding">
+    <!-- 文件上传 -->
+    <label class="file-input-label" for="gff-file-input" aria-label="Upload GFF file">
+      <span class="btn-icon">📂</span>
+      <span class="btn-text">上传GFF</span>
+      <input type="file" id="gff-file-input" accept=".gff,.gff3" class="file-input" />
+    </label>
+    <button id="export-svg-btn" class="btn btn-lg btn-icon-text" aria-label="Export SVG">
+      <span class="btn-icon">📤</span>
+      <span class="btn-text">导出SVG</span>
+    </button>
+  </div>
   <!-- Gene搜索 -->
   <div class="sidebar-section search-section">
     <h4 class="section-title">根据基因名或ID搜索</h4>
@@ -157,17 +154,21 @@
     <!-- 图例和标签控制 -->
     <div class="control-item control-buttons-row">
       <button id="legend-toggle" class="btn btn-lg btn-primary">
-        <span class="btn-text toggle-text">Show Legend</span>
+        <span class="btn-text legend-text">Hide Legend</span>
       </button>
       <button id="labels-toggle" class="btn btn-lg btn-primary">
-        <span class="btn-text toggle-text">Show Labels</span>
+        <span class="btn-text labels-text">Hide Labels</span>
       </button>
     </div>
 
-    <!-- 参考圆线控制 -->
-    <div class="control-item">
+    <div class="control-item control-buttons-row">
+      <!-- 参考圆线控制 -->
       <button id="grid-toggle" class="btn btn-lg btn-primary">
-        <span class="btn-text toggle-text">Show Grid</span>
+        <span class="btn-text grid-text">Hide Grid</span>
+      </button>
+      <!-- 渲染模式切换 -->
+       <button class="btn btn-lg btn-primary active" id="render-mode-btn" data-mode="canvas">
+         切换<span class="btn-text render-mode-text">Canvas Mode</span>
       </button>
     </div>
     <!-- 缩放控制 -->
@@ -175,13 +176,6 @@
       <button id="zoom-in-btn" class="btn btn-lg" aria-label="Zoom in">放大</button>
       <button id="zoom-out-btn" class="btn btn-lg" aria-label="Zoom out">缩小</button>
       <button id="reset-zoom-btn" class="btn btn-lg" aria-label="Reset zoom">重置</button>
-    </div>
-        <!-- 渲染模式 -->
-    <div class="control-item">
-      <div class="render-mode-options">
-        <button class="btn btn-lg btn-primary active" data-mode="svg">Svg Mode</button>
-        <button class="btn btn-lg" data-mode="canvas">Canvas Mode</button>
-      </div>
     </div>
   </div>
 </div>

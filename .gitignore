@@ -24,3 +24,5 @@ dist-ssr
 *.sw?
 .trae/documents/svg_renderer_implementation_plan.md
 .trae
+test-project
+*.tgz

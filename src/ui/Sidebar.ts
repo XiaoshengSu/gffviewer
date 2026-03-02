@@ -79,17 +79,21 @@ export class SidebarManager {
   private initRenderModeToggle() {
     if (!this.cgview) return;
     
-    const renderModeButtons = document.querySelectorAll('.render-mode-btn');
-    renderModeButtons.forEach(button => {
-      button.addEventListener('click', () => {
-        const mode = (button as HTMLElement).dataset.mode as 'svg' | 'canvas';
-        this.cgview?.setRendererType(mode);
-        
-        // 更新按钮状态
-        renderModeButtons.forEach(btn => btn.classList.remove('active'));
-        button.classList.add('active');
+    const button = document.getElementById('render-mode-btn')!;
+    button.addEventListener('click', () => {
+      const mode = button.dataset.mode as 'svg' | 'canvas';
+      this.cgview?.setRendererType(mode);
+      console.log(`切换到${mode}模式`);
+        // 更新文案
+        const renderModeText = button.querySelector('.render-mode-text') as HTMLElement;
+        if (renderModeText) {
+          renderModeText.textContent = mode === 'svg' ? 'Canvas Mode': 'Svg Mode'  
+        }
+        // 更新mode
+        button.dataset.mode = mode === 'svg' ? 'canvas' : 'svg';
+       
+        console.log(renderModeText)
       });
-    });
   }
   
   /**
@@ -126,7 +130,7 @@ export class SidebarManager {
       }
       
       gridToggle.addEventListener('click', () => {
-        const toggleText = gridToggle.querySelector('.toggle-text') as HTMLElement;
+        const toggleText = gridToggle.querySelector('.grid-text') as HTMLElement;
         if (toggleText) {
           if (toggleText.textContent === 'Hide Grid') {
             toggleText.textContent = 'Show Grid';
@@ -222,18 +226,14 @@ export class SidebarManager {
     const legendToggle = document.getElementById('legend-toggle');
     if (legendToggle) {
       legendToggle.addEventListener('click', () => {
-        const toggleText = legendToggle.querySelector('.toggle-text') as HTMLElement;
+        const toggleText = legendToggle.querySelector('.legend-text') as HTMLElement;
         if (toggleText) {
           if (toggleText.textContent === 'Hide Legend') {
             toggleText.textContent = 'Show Legend';
-            legendToggle.classList.remove('active');
-            // 这里可以添加实际的图例隐藏逻辑
-            // this.cgview?.hideLegend();
+            legendToggle.classList.add('active');
           } else {
             toggleText.textContent = 'Hide Legend';
-            legendToggle.classList.add('active');
-            // 这里可以添加实际的图例显示逻辑
-            // this.cgview?.showLegend();
+            legendToggle.classList.remove('active');
           }
         }
       });
@@ -249,18 +249,14 @@ export class SidebarManager {
     const labelsToggle = document.getElementById('labels-toggle');
     if (labelsToggle) {
       labelsToggle.addEventListener('click', () => {
-        const toggleText = labelsToggle.querySelector('.toggle-text') as HTMLElement;
+        const toggleText = labelsToggle.querySelector('.labels-text') as HTMLElement;
         if (toggleText) {
           if (toggleText.textContent === 'Hide Labels') {
-            toggleText.textContent = 'Show Labels';
-            labelsToggle.classList.remove('active');
-            // 这里可以添加实际的标签隐藏逻辑
-            // this.cgview?.hideLabels();
-          } else {
             toggleText.textContent = 'Hide Labels';
             labelsToggle.classList.add('active');
-            // 这里可以添加实际的标签显示逻辑
-            // this.cgview?.showLabels();
+          } else {
+            toggleText.textContent = 'Show Labels';
+            labelsToggle.classList.remove('active');
           }
         }
       });

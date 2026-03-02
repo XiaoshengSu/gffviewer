@@ -11,7 +11,6 @@ export class ControlsManager {
   private zoomInBtn: HTMLElement;
   private zoomOutBtn: HTMLElement;
   private resetZoomBtn: HTMLElement;
-  private fullscreenBtn: HTMLElement;
   private exportSvgBtn: HTMLElement;
   private gffFileInput: HTMLInputElement;
   private dropArea: HTMLElement | null;
@@ -25,7 +24,6 @@ export class ControlsManager {
     this.zoomInBtn = document.getElementById('zoom-in-btn')!;
     this.zoomOutBtn = document.getElementById('zoom-out-btn')!;
     this.resetZoomBtn = document.getElementById('reset-zoom-btn')!;
-    this.fullscreenBtn = document.getElementById('fullscreen-btn')!;
     this.exportSvgBtn = document.getElementById('export-svg-btn')!;
     this.gffFileInput = document.getElementById('gff-file-input')! as HTMLInputElement;
     this.dropArea = document.getElementById('drop-area');
@@ -109,19 +107,7 @@ export class ControlsManager {
       this.cgview?.setPanOffset({ x: 0, y: 0 });
     });
 
-    // 全屏按钮
-    this.fullscreenBtn.addEventListener('click', () => {
-      const container = document.getElementById('cgview-container')!;
-      if (!document.fullscreenElement) {
-        container.requestFullscreen().catch(err => {
-          console.error(`Error attempting to enable fullscreen: ${err.message}`);
-        });
-      } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        }
-      }
-    });
+
 
     // 导出SVG按钮
     this.exportSvgBtn.addEventListener('click', async () => {

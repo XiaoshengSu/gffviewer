@@ -178,6 +178,523 @@ iview/
 
 欢迎社区贡献代码、报告问题或提出建议。请通过 GitHub 仓库的 Issues 和 Pull Requests 进行贡献。
 
+## 作为 NPM 模块使用
+
+### 安装
+
+```bash
+# 使用 npm
+npm install gffviewer
+
+# 或使用 yarn
+yarn add gffviewer
+```
+
+### 基本使用
+
+```javascript
+import { CGView } from 'gffviewer';
+
+// 创建容器元素
+const container = document.getElementById('gffviewer-container');
+
+// 初始化 CGView
+const cgview = new CGView(container, {
+  width: 800,
+  height: 600,
+  theme: 'light',
+  defaultViewMode: 'circular',
+  showSidebar: true,
+  showLegend: true,
+  showToolbar: true,
+  zoomEnabled: true,
+  panEnabled: true,
+  searchEnabled: true,
+  rendererType: 'canvas'
+});
+
+// 加载基因组数据
+async function loadData() {
+  try {
+    const response = await fetch('path/to/your/data.gff');
+    const content = await response.text();
+    await cgview.loadGenome(content, 'gff3');
+    console.log('Genome data loaded successfully');
+  } catch (error) {
+    console.error('Error loading genome data:', error);
+  }
+}
+
+// 加载数据
+loadData();
+```
+
+### 核心 API
+
+#### 初始化
+
+```javascript
+const cgview = new CGView(container, options);
+```
+
+- `container`: HTMLElement - 放置可视化的容器元素
+- `options`: CGViewOptions - 配置选项
+
+#### 加载数据
+
+```javascript
+await cgview.loadGenome(data, format);
+```
+
+- `data`: string | File - 基因组数据，可以是字符串或文件对象
+- `format`: string - 数据格式，目前支持 'gff3'
+
+#### 视图控制
+
+```javascript
+// 缩放
+cgview.zoomIn();
+cgview.zoomOut();
+cgview.setZoomLevel(2); // 2x 缩放
+
+// 平移
+cgview.pan(deltaX, deltaY);
+
+// 重置视图
+cgview.resetView();
+
+// 切换图例
+cgview.toggleLegend(true); // 显示图例
+
+// 切换标签
+cgview.toggleLabels(true); // 显示标签
+
+// 切换参考圆线
+cgview.toggleGrid(true); // 显示参考圆线
+```
+
+#### 导出功能
+
+```javascript
+// 导出为 PNG
+const pngBlob = await cgview.export('png');
+downloadBlob(pngBlob, 'genome.png');
+
+// 导出为 SVG
+const svgBlob = await cgview.export('svg');
+downloadBlob(svgBlob, 'genome.svg');
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+```
+
+#### 事件监听
+
+```javascript
+// 监听数据加载完成事件
+cgview.on('dataLoaded', (genome) => {
+  console.log('Genome data loaded:', genome);
+});
+
+// 监听缩放事件
+cgview.on('zoom', (data) => {
+  console.log('Zoom event:', data);
+});
+
+// 监听平移事件
+cgview.on('pan', (data) => {
+  console.log('Pan event:', data);
+});
+
+// 监听点击事件
+cgview.on('click', (data) => {
+  console.log('Click event:', data);
+});
+
+// 监听悬停事件
+cgview.on('hover', (data) => {
+  console.log('Hover event:', data);
+});
+```
+
+## 配置选项详解
+
+### 初始化选项
+
+| 选项 | 类型 | 默认值 | 描述 |
+|------|------|--------|------|
+| `width` | number | 800 | 可视化区域宽度 |
+| `height` | number | 600 | 可视化区域高度 |
+| `theme` | string | 'light' | 主题，支持 'light' 和 'dark' |
+| `defaultViewMode` | string | 'circular' | 默认视图模式，目前仅支持 'circular' |
+| `showSidebar` | boolean | true | 是否显示侧边栏 |
+| `showLegend` | boolean | true | 是否显示图例 |
+| `showToolbar` | boolean | true | 是否显示工具栏 |
+| `zoomEnabled` | boolean | true | 是否启用缩放功能 |
+| `panEnabled` | boolean | true | 是否启用平移功能 |
+| `searchEnabled` | boolean | true | 是否启用搜索功能 |
+| `rendererType` | string | 'canvas' | 渲染类型，支持 'canvas' 和 'svg' |
+
+### 示例：自定义配置
+
+```javascript
+const cgview = new CGView(container, {
+  width: 1000,
+  height: 800,
+  theme: 'dark',
+  defaultViewMode: 'circular',
+  showSidebar: false, // 不显示侧边栏
+  showLegend: true,
+  showToolbar: true,
+  zoomEnabled: true,
+  panEnabled: true,
+  searchEnabled: false, // 禁用搜索功能
+  rendererType: 'svg' // 使用 SVG 渲染
+});
+```
+
+## 高级使用场景
+
+### 1. 处理大型基因组数据
+
+对于大型基因组数据，可以通过以下方式优化性能：
+
+```javascript
+// 初始化时设置更合理的配置
+const cgview = new CGView(container, {
+  width: 1000,
+  height: 800,
+  rendererType: 'canvas', // Canvas 渲染更适合大型数据
+  // 其他配置...
+});
+
+// 加载数据时使用流式处理
+async function loadLargeGenome() {
+  try {
+    // 显示加载状态
+    container.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 18px; color: #666;">Loading large genome data...</div>';
+    
+    // 加载数据
+    const response = await fetch('large-genome.gff');
+    const content = await response.text();
+    
+    // 加载到 CGView
+    await cgview.loadGenome(content, 'gff3');
+    
+    console.log('Large genome data loaded successfully');
+  } catch (error) {
+    console.error('Error loading large genome data:', error);
+    container.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 18px; color: #f44336;">Error loading data</div>';
+  }
+}
+
+loadLargeGenome();
+```
+
+### 2. 自定义颜色方案
+
+```javascript
+// 导入颜色方案管理器
+import { ColorSchemeManager } from 'gffviewer';
+
+// 创建颜色方案管理器实例
+const colorSchemeManager = new ColorSchemeManager();
+
+// 应用内置颜色方案
+colorSchemeManager.applyColorScheme('default');
+colorSchemeManager.applyColorScheme('viridis');
+colorSchemeManager.applyColorScheme('categorical');
+
+// 自定义颜色方案
+const customColorScheme = {
+  gene: '#3498db',
+  rna: '#e74c3c',
+  repeat: '#9b59b6',
+  gc_content: '#2ecc71',
+  gc_skew_plus: '#1abc9c',
+  gc_skew_minus: '#f39c12'
+};
+
+// 应用自定义颜色方案
+colorSchemeManager.setCustomColorScheme(customColorScheme);
+colorSchemeManager.applyColorScheme('custom');
+```
+
+### 3. 与框架集成
+
+#### React 集成示例
+
+```jsx
+import React, { useEffect, useRef } from 'react';
+import { CGView } from 'gffviewer';
+
+const GenomeViewer = ({ dataUrl }) => {
+  const containerRef = useRef(null);
+  const cgviewRef = useRef(null);
+
+  useEffect(() => {
+    if (containerRef.current && !cgviewRef.current) {
+      // 初始化 CGView
+      cgviewRef.current = new CGView(containerRef.current, {
+        width: 800,
+        height: 600,
+        theme: 'light',
+        defaultViewMode: 'circular',
+        showSidebar: true,
+        showLegend: true,
+        showToolbar: true,
+        zoomEnabled: true,
+        panEnabled: true,
+        searchEnabled: true,
+        rendererType: 'canvas'
+      });
+
+      // 加载数据
+      const loadData = async () => {
+        try {
+          const response = await fetch(dataUrl);
+          const content = await response.text();
+          await cgviewRef.current.loadGenome(content, 'gff3');
+        } catch (error) {
+          console.error('Error loading genome data:', error);
+        }
+      };
+
+      loadData();
+    }
+
+    // 清理函数
+    return () => {
+      if (cgviewRef.current) {
+        cgviewRef.current.destroy();
+        cgviewRef.current = null;
+      }
+    };
+  }, [dataUrl]);
+
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        width: '100%',
+        height: '600px',
+        border: '1px solid #e0e0e0',
+        borderRadius: '4px'
+      }}
+    />
+  );
+};
+
+export default GenomeViewer;
+```
+
+#### Vue 集成示例
+
+```vue
+<template>
+  <div ref="container" class="genome-viewer"></div>
+</template>
+
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue';
+import { CGView } from 'gffviewer';
+
+const props = defineProps({
+  dataUrl: {
+    type: String,
+    required: true
+  }
+});
+
+const container = ref(null);
+let cgview = null;
+
+onMounted(async () => {
+  if (container.value) {
+    // 初始化 CGView
+    cgview = new CGView(container.value, {
+      width: 800,
+      height: 600,
+      theme: 'light',
+      defaultViewMode: 'circular',
+      showSidebar: true,
+      showLegend: true,
+      showToolbar: true,
+      zoomEnabled: true,
+      panEnabled: true,
+      searchEnabled: true,
+      rendererType: 'canvas'
+    });
+
+    // 加载数据
+    try {
+      const response = await fetch(props.dataUrl);
+      const content = await response.text();
+      await cgview.loadGenome(content, 'gff3');
+    } catch (error) {
+      console.error('Error loading genome data:', error);
+    }
+  }
+});
+
+onUnmounted(() => {
+  if (cgview) {
+    cgview.destroy();
+    cgview = null;
+  }
+});
+</script>
+
+<style scoped>
+.genome-viewer {
+  width: 100%;
+  height: 600px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+</style>
+```
+
+## 常见问题与解决方案
+
+### 1. 数据加载失败
+
+**问题**：加载 GFF3 文件时出现错误。
+
+**解决方案**：
+- 检查文件格式是否正确，确保是有效的 GFF3 格式
+- 检查文件路径是否正确
+- 检查文件大小是否过大，对于大型文件可能需要优化加载方式
+- 查看浏览器控制台的错误信息，了解具体错误原因
+
+### 2. 性能问题
+
+**问题**：渲染大型基因组数据时性能较差。
+
+**解决方案**：
+- 使用 Canvas 渲染模式（`rendererType: 'canvas'`）
+- 减少标签显示数量（通过缩放或配置）
+- 关闭不必要的功能（如搜索、图例等）
+- 考虑对大型数据进行分块处理
+
+### 3. 样式问题
+
+**问题**：可视化区域大小不正确或样式异常。
+
+**解决方案**：
+- 确保容器元素有明确的宽度和高度
+- 检查 CSS 样式是否与其他样式冲突
+- 尝试使用不同的渲染模式
+
+### 4. 导出功能问题
+
+**问题**：导出 PNG 或 SVG 时出现错误。
+
+**解决方案**：
+- 确保浏览器支持 Canvas 或 SVG 导出
+- 检查渲染器类型是否正确
+- 对于大型可视化，可能需要增加导出超时时间
+
+## 性能优化建议
+
+1. **选择合适的渲染器**：
+   - 对于大型数据或需要高性能的场景，使用 Canvas 渲染器
+   - 对于需要更好的文本渲染或与 DOM 交互的场景，使用 SVG 渲染器
+
+2. **优化数据加载**：
+   - 对于大型 GFF3 文件，考虑使用流式解析
+   - 实现数据缓存机制，避免重复加载
+
+3. **优化渲染**：
+   - 减少不必要的渲染操作
+   - 使用 LOD (Level of Detail) 技术，根据缩放级别调整渲染细节
+   - 避免频繁的 DOM 操作
+
+4. **内存管理**：
+   - 及时清理不再使用的资源
+   - 使用 `destroy()` 方法释放 CGView 实例占用的资源
+
+## 最佳实践
+
+1. **数据预处理**：
+   - 在加载前对 GFF3 文件进行验证和预处理
+   - 对于大型数据，考虑过滤掉不必要的信息
+
+2. **配置优化**：
+   - 根据具体使用场景调整配置选项
+   - 对于嵌入式应用，考虑关闭不必要的 UI 元素
+
+3. **错误处理**：
+   - 实现完善的错误处理机制
+   - 提供友好的错误提示
+
+4. **用户体验**：
+   - 提供加载状态指示
+   - 实现平滑的过渡动画
+   - 确保交互操作响应及时
+
+## 扩展与定制
+
+### 自定义渲染器
+
+如果需要自定义渲染逻辑，可以扩展现有的渲染器类：
+
+```javascript
+import { CircularRenderer } from 'gffviewer';
+
+class CustomCircularRenderer extends CircularRenderer {
+  // 重写渲染方法
+  render() {
+    // 自定义渲染逻辑
+    super.render();
+    // 额外的渲染操作
+  }
+  
+  // 添加自定义方法
+  customMethod() {
+    // 自定义功能
+  }
+}
+
+// 使用自定义渲染器
+const customRenderer = new CustomCircularRenderer(container, width, height, 'canvas');
+```
+
+### 自定义数据解析器
+
+如果需要支持其他数据格式，可以实现自定义数据解析器：
+
+```javascript
+import { DataManager } from 'gffviewer';
+
+// 扩展 DataManager 类
+class CustomDataManager extends DataManager {
+  // 重写加载方法
+  async loadGenome(data, format) {
+    if (format === 'custom') {
+      // 自定义格式解析逻辑
+      return this.parseCustomFormat(data);
+    }
+    // 调用父类方法处理其他格式
+    return super.loadGenome(data, format);
+  }
+  
+  // 自定义解析方法
+  parseCustomFormat(data) {
+    // 实现自定义格式解析
+    // ...
+  }
+}
+```
+
 ## 联系方式
 
 如有任何问题或建议，请通过 GitHub 仓库的 Issues 与我们联系。
