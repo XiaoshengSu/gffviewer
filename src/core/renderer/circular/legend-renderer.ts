@@ -182,11 +182,25 @@ export class LegendRenderer {
       let statsContent = '';
       
       if (track.type === 'gc_content') {
-        // GC Content: 显示平均值（模拟数据，实际应从 Track 计算）
-        statsContent = 'Avg: ~50%'; 
+        // GC Content: 计算并显示平均值
+        if (track.features.length > 0) {
+          const values = track.features.map(feature => parseFloat(feature.attributes?.value || '0'));
+          const sum = values.reduce((acc, val) => acc + val, 0);
+          const avg = sum / values.length;
+          statsContent = `Avg: ${avg.toFixed(1)}%`;
+        } else {
+          statsContent = 'No data';
+        }
       } else if (track.type.includes('gc_skew')) {
-        // GC Skew: 显示范围
-        statsContent = 'Deviation metric';
+        // GC Skew: 计算并显示范围
+        if (track.features.length > 0) {
+          const values = track.features.map(feature => parseFloat(feature.attributes?.value || '0'));
+          const min = Math.min(...values);
+          const max = Math.max(...values);
+          statsContent = `Range: ${min.toFixed(2)} to ${max.toFixed(2)}`;
+        } else {
+          statsContent = 'No data';
+        }
       } else {
         // 普通特征：显示数量和总长度
         const count = this.formatNumber(track.features.length);
@@ -384,9 +398,25 @@ export class LegendRenderer {
       // 3. 统计信息（第二行，灰色小字）
       let statsContent = '';
       if (track.type === 'gc_content') {
-        statsContent = 'Avg: ~50%';
+        // GC Content: 计算并显示平均值
+        if (track.features.length > 0) {
+          const values = track.features.map(feature => parseFloat(feature.attributes?.value || '0'));
+          const sum = values.reduce((acc, val) => acc + val, 0);
+          const avg = sum / values.length;
+          statsContent = `Avg: ${avg.toFixed(1)}%`;
+        } else {
+          statsContent = 'No data';
+        }
       } else if (track.type.includes('gc_skew')) {
-        statsContent = 'Deviation metric';
+        // GC Skew: 计算并显示范围
+        if (track.features.length > 0) {
+          const values = track.features.map(feature => parseFloat(feature.attributes?.value || '0'));
+          const min = Math.min(...values);
+          const max = Math.max(...values);
+          statsContent = `Range: ${min.toFixed(2)} to ${max.toFixed(2)}`;
+        } else {
+          statsContent = 'No data';
+        }
       } else {
         const count = this.formatNumber(track.features.length);
         const totalLen = track.features.reduce((sum, f) => sum + (f.end - f.start), 0);
