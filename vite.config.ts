@@ -3,26 +3,12 @@ import path from 'path';
 
 export default defineConfig({
   build: {
-    lib: {
-      entry: path.resolve(__dirname, 'src/index.ts'),
-      name: 'GFFViewer',
-      fileName: (format) => `gffviewer.${format === 'es' ? 'js' : 'umd.cjs'}`,
-    },
-    rollupOptions: {
-      external: ['d3', 'd3-scale', 'd3-zoom', 'pixi.js', 'zustand', 'jszip', 'papaparse'],
-      output: {
-        globals: {
-          d3: 'd3',
-          'd3-scale': 'd3',
-          'd3-zoom': 'd3',
-          'pixi.js': 'PIXI',
-          zustand: 'zustand',
-          jszip: 'JSZip',
-          papaparse: 'Papa'
-        },
-      },
-    },
+    outDir: 'dist',
+    assetsDir: 'assets',
+    minify: 'esbuild',
+    sourcemap: false,
   },
+  publicDir: 'public',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),

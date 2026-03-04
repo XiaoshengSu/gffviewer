@@ -10,7 +10,7 @@ export class TemplateLoader {
    */
   static async loadSidebarTemplate(): Promise<string> {
     try {
-      const response = await fetch('/src/ui/templates/sidebar.html');
+      const response = await fetch('/sidebar.html');
       if (!response.ok) {
         throw new Error(`Failed to load sidebar template: ${response.status} ${response.statusText}`);
       }
