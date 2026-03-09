@@ -57,9 +57,11 @@ export class DragAndZoomManager {
 
     // 鼠标按下事件
     this.container.addEventListener('mousedown', (e: any) => {
+      e.preventDefault();
       this.isDragging = true;
       this.lastX = e.clientX;
       this.lastY = e.clientY;
+      this.container.style.cursor = 'move';
     });
     
     // 鼠标移动事件（使用节流）
@@ -80,11 +82,13 @@ export class DragAndZoomManager {
     // 鼠标释放事件
     this.container.addEventListener('mouseup', () => {
       this.isDragging = false;
+      this.container.style.cursor = 'default';
     });
     
     // 鼠标离开事件
     this.container.addEventListener('mouseleave', () => {
       this.isDragging = false;
+      this.container.style.cursor = 'default';
     });
     
     // 鼠标滚轮事件（缩放）（使用节流）

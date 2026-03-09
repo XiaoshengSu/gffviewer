@@ -219,62 +219,19 @@ export class CircularRenderer extends BaseRenderer {
     console.log('CircularRenderer: SVG containers initialized successfully');
     console.log('SVG container:', this.svgContainer);
     
-    // 添加交互性，使圈图可拖拽
-    const circleContainer = this.svgContainer.select('g#featureContainer');
-    
-    // 拖拽逻辑
-    let isDragging = false;
-    let lastX = 0;
-    let lastY = 0;
-    
     // 使用D3.js的事件处理系统，确保事件处理的一致性
     const svg = this.svgContainer;
     
-    svg.on('mousedown', (event) => {
-      // 只在点击featureContainer时开始拖拽
-      if (event.target.closest('#featureContainer')) {
-        isDragging = true;
-        lastX = event.clientX;
-        lastY = event.clientY;
-        circleContainer.style('cursor', 'move');
-      }
-    });
-    
+    // 鼠标移动事件 - 只处理hover，拖拽由DragAndZoomManager统一管理
     svg.on('mousemove', (event) => {
-      if (isDragging) {
-        event.preventDefault(); // 防止默认行为
-        const deltaX = event.clientX - lastX;
-        const deltaY = event.clientY - lastY;
-        lastX = event.clientX;
-        lastY = event.clientY;
-        
-        // 只移动圈图相关的容器，不移动图例容器及其子元素
-        svg.selectAll('g#gridContainer, g#featureContainer, g#labelContainer, g#scaleContainer').each(function() {
-          const g = d3.select(this);
-          const transform = g.attr('transform') || 'translate(0,0)';
-          const match = transform.match(/translate\(([^,]+),([^\)]+)\)/);
-          if (match) {
-            const x = parseFloat(match[1]) + deltaX;
-            const y = parseFloat(match[2]) + deltaY;
-            g.attr('transform', `translate(${x},${y})`);
-          } else {
-            g.attr('transform', `translate(${deltaX},${deltaY})`);
-          }
-        });
-      } else {
-        // 非拖拽状态下，处理鼠标悬停
-        this.handleMouseMove(event);
-      }
+      // 处理鼠标悬停
+      this.handleMouseMove(event);
     });
     
-    svg.on('mouseup', () => {
-      isDragging = false;
-      circleContainer.style('cursor', 'default');
-    });
-    
-    svg.on('mouseleave', () => {
-      isDragging = false;
-      circleContainer.style('cursor', 'default');
+    // 鼠标离开事件
+    svg.on('mouseleave', (event) => {
+      // 鼠标离开画布，触发空hover事件
+      this.handleMouseLeave(event);
     });
     
     this.init();

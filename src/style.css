@@ -27,6 +27,7 @@ body {
 .cgview-container {
   flex: 1;
   position: relative;
+  user-select: none;
 }
 
 /* 主题变量 */

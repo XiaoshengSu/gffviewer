@@ -87,7 +87,7 @@ export class ZoomPanController {
       svgContainer.selectAll('g#gridContainer, g#featureContainer, g#labelContainer, g#scaleContainer').each(function() {
         const g = d3.select(this);
         const transform = g.attr('transform') || 'translate(0,0)';
-        const match = transform.match(/translate\(([^,]+),([^\)]+)\)/);
+        const match = transform.match(/translate\(\s*([^,\s]+)[,\s]+([^)\s]+)\s*\)/);
         const currentX = match ? parseFloat(match[1]) : 0;
         const currentY = match ? parseFloat(match[2]) : 0;
         
@@ -114,7 +114,7 @@ export class ZoomPanController {
       svgContainer.selectAll('g#gridContainer, g#featureContainer, g#labelContainer, g#scaleContainer').each(function() {
         const g = d3.select(this);
         const transform = g.attr('transform') || 'translate(0,0)';
-        const match = transform.match(/translate\(([^,]+),([^\)]+)\)/);
+        const match = transform.match(/translate\(\s*([^,\s]+)[,\s]+([^)\s]+)\s*\)/);
         const currentX = match ? parseFloat(match[1]) : 0;
         const currentY = match ? parseFloat(match[2]) : 0;
         
@@ -147,31 +147,29 @@ export class ZoomPanController {
         // 不需要调用render()，直接修改位置即可
       }
     } else if (rendererType === 'svg' && svgContainer) {
+      // 保存当前的 zoomLevel，避免从 DOM 解析 scale 失败导致缩放重置
+      const currentScale = this.zoomLevel;
+      
       svgContainer.selectAll('g#gridContainer, g#featureContainer, g#labelContainer, g#scaleContainer').each(function() {
         const g = d3.select(this);
         const transform = g.attr('transform') || 'translate(0,0)';
         
-        // 解析当前的 translate 和 scale
+        // 解析当前的 translate
         let currentX = 0;
         let currentY = 0;
-        let currentScale = 1;
         
-        const translateMatch = transform.match(/translate\(([^,]+),([^\)]+)\)/);
+        // 改进正则表达式，支持逗号或空格分隔
+        const translateMatch = transform.match(/translate\(\s*([^,\s]+)[,\s]+([^)\s]+)\s*\)/);
         if (translateMatch) {
           currentX = parseFloat(translateMatch[1]);
           currentY = parseFloat(translateMatch[2]);
-        }
-        
-        const scaleMatch = transform.match(/scale\(([^\)]+)\)/);
-        if (scaleMatch) {
-          currentScale = parseFloat(scaleMatch[1]);
         }
         
         // 计算新的位置
         const newX = currentX + offset.x;
         const newY = currentY + offset.y;
         
-        // 构建新的 transform 字符串，保留 scale
+        // 构建新的 transform 字符串，使用当前保存的 scale
         if (currentScale !== 1) {
           g.attr('transform', `translate(${newX},${newY}) scale(${currentScale})`);
         } else {
